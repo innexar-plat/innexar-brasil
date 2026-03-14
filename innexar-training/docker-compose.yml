@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  innexar-training:
+    image: ${IMAGE_REPOSITORY:-ghcr.io/innexar-plat/innexar-brasil}/training:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: innexar-training
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - NEXT_TELEMETRY_DISABLED=1
+    networks:
+      - fixelo_fixelo-network
+    labels:
+      - "innexar.scope=br"
+      - "traefik.enable=true"
+      - "traefik.http.routers.innexar-training.rule=Host(`interno.innexar.com.br`)"
+      - "traefik.http.routers.innexar-training.entrypoints=websecure"
+      - "traefik.http.routers.innexar-training.tls.certresolver=cloudflare"
+      - "traefik.http.services.innexar-training-service.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  fixelo_fixelo-network:
+    external: true
