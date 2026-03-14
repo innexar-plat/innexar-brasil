@@ -1,6 +1,6 @@
 services:
   innexar-websitebr:
-    image: ${IMAGE_REPOSITORY:-ghcr.io/innexar-plat/innexar-brasil}/websitebr:${IMAGE_TAG:-latest}
+    image: ${IMAGE:-ghcr.io/innexar-plat/innexar-websitebr:latest}
     build:
       context: .
       dockerfile: Dockerfile
