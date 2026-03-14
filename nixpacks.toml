@@ -1,0 +1,19 @@
+# Monorepo: Nixpacks não detecta app na raiz. Este arquivo define o build do site Brasil (innexar-websitebr).
+# Para implantar outro app (portal, training, workspace-app), use "Base Directory" no Coolify
+# apontando para a pasta do app (ex: innexar-portal) ou altere os caminhos abaixo.
+
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["cd innexar-websitebr && npm ci --no-audit --fund=false"]
+
+[phases.build]
+cmds = ["cd innexar-websitebr && npm run build"]
+dependsOn = ["install"]
+
+[start]
+cmd = "cd innexar-websitebr && npm run start"
+
+[variables]
+NODE_ENV = "production"
