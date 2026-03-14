@@ -1,29 +1,66 @@
 # Innexar Brasil CI/CD
 
-Este stack foi preparado para um fluxo de qualidade + publish de imagens + deploy em producao sem rebuild no servidor.
+Este stack suporta dois fluxos: **monorepo** (CI na raiz) e **repositórios individuais** (cada app com seu repo e CI próprio). O deploy em produção usa Docker Compose com imagens do GHCR.
 
-## Workflows
+## Repositórios individuais (recomendado)
 
-- `quality.yml`: lint, testes, build e validacao de compose.
-- `docker-images.yml`: build e publish de imagens em `ghcr.io`.
-- `codeql.yml`: analise estatica de seguranca para JavaScript/TypeScript e Python.
-- `trivy.yml`: varredura de vulnerabilidades e misconfiguracoes.
-- `deploy-production.yml`: deploy manual para o VPS de producao BR.
+Cada app pode ser desenvolvido e implantado a partir do seu próprio repositório.
 
-## Imagens publicadas
+### Criar os repositórios no GitHub
 
-As imagens sao publicadas em:
+Crie repositórios **vazios** (sem README, sem .gitignore) na organização `innexar-plat`:
 
-- `ghcr.io/innexar-plat/innexar-brasil/websitebr`
-- `ghcr.io/innexar-plat/innexar-brasil/portal`
-- `ghcr.io/innexar-plat/innexar-brasil/training`
-- `ghcr.io/innexar-plat/innexar-brasil/workspace-app`
-- `ghcr.io/innexar-plat/innexar-brasil/workspace-backend`
+- `innexar-plat/innexar-websitebr`
+- `innexar-plat/innexar-portal`
+- `innexar-plat/innexar-training`
+- `innexar-plat/innexar-workspace-app`
+- `innexar-plat/innexar-workspace`
 
-Cada imagem recebe pelo menos estas tags:
+### Push do monorepo para os repos individuais
 
-- `latest`
-- `sha-<commit>`
+A partir da raiz do monorepo (`Innexar-Brasil`):
+
+```bash
+./scripts/push-to-individual-repos.sh
+```
+
+O script usa `git subtree push`: cada pasta (ex.: `innexar-websitebr`) é enviada para o repo correspondente na branch `main`. Execute após commits no monorepo para espelhar o código nos repos individuais.
+
+### CI em cada repo
+
+Cada repositório individual contém em sua raiz (após o subtree push):
+
+- `.github/workflows/ci.yml`: lint, testes (quando houver), build.
+- `.github/workflows/docker.yml`: build e push da imagem para `ghcr.io/innexar-plat/<nome-do-repo>`.
+
+As imagens passam a ser publicadas em:
+
+- `ghcr.io/innexar-plat/innexar-websitebr`
+- `ghcr.io/innexar-plat/innexar-portal`
+- `ghcr.io/innexar-plat/innexar-training`
+- `ghcr.io/innexar-plat/innexar-workspace-app`
+- `ghcr.io/innexar-plat/innexar-workspace` (backend da API)
+
+### Docker Compose na raiz do monorepo
+
+O arquivo `docker-compose.yml` na raiz usa **apenas imagens** (sem build), puxadas do GHCR:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Requer que a rede `fixelo_fixelo-network` exista (ex.: `docker network create fixelo_fixelo-network`). Cada serviço usa a imagem do seu repo (ex.: `ghcr.io/innexar-plat/innexar-websitebr:latest`).
+
+---
+
+## Monorepo (workflows na raiz)
+
+- `quality.yml`: lint, testes, build e validação de compose para todos os apps.
+- `docker-images.yml`: build e publish de imagens em `ghcr.io/innexar-plat/innexar-brasil/<nome>` (formato antigo).
+- `codeql.yml`, `trivy.yml`, `deploy-production.yml`: segurança e deploy.
+
+Cada imagem recebe as tags `latest` e `sha-<commit>`.
 
 ## Secrets obrigatorios
 

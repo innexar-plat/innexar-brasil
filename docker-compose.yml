@@ -1,0 +1,195 @@
+# Docker Compose na raiz do monorepo: usa imagens dos repositórios individuais (GHCR).
+# Imagens são construídas e publicadas pelo CI de cada repo (innexar-websitebr, innexar-portal, etc.).
+#
+# Pré-requisito: rede externa para Traefik (crie antes se não existir):
+#   docker network create fixelo_fixelo-network
+#
+# Uso: docker compose pull && docker compose up -d
+
+services:
+  innexar-websitebr:
+    image: ghcr.io/innexar-plat/innexar-websitebr:latest
+    container_name: innexar-websitebr
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: 1
+    env_file:
+      - path: innexar-websitebr/.env
+        required: false
+    networks:
+      - fixelo_fixelo-network
+    labels:
+      - "innexar.scope=br"
+      - "traefik.enable=true"
+      - "traefik.http.routers.innexar-br.rule=Host(`innexar.com.br`) || Host(`www.innexar.com.br`)"
+      - "traefik.http.routers.innexar-br.entrypoints=websecure"
+      - "traefik.http.routers.innexar-br.tls.certresolver=cloudflare"
+      - "traefik.http.routers.innexar-br.service=innexar-br-service"
+      - "traefik.http.services.innexar-br-service.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  innexar-portal:
+    image: ghcr.io/innexar-plat/innexar-portal:latest
+    container_name: innexar-portal
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: 1
+    env_file:
+      - path: innexar-portal/.env
+        required: false
+    networks:
+      - fixelo_fixelo-network
+    labels:
+      - "innexar.scope=br"
+      - "traefik.enable=true"
+      - "traefik.http.routers.innexar-portal.rule=Host(`portal.innexar.com.br`)"
+      - "traefik.http.routers.innexar-portal.entrypoints=websecure"
+      - "traefik.http.routers.innexar-portal.tls.certresolver=cloudflare"
+      - "traefik.http.services.innexar-portal-service.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  innexar-training:
+    image: ghcr.io/innexar-plat/innexar-training:latest
+    container_name: innexar-training
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: 1
+    networks:
+      - fixelo_fixelo-network
+    labels:
+      - "innexar.scope=br"
+      - "traefik.enable=true"
+      - "traefik.http.routers.innexar-training.rule=Host(`interno.innexar.com.br`)"
+      - "traefik.http.routers.innexar-training.entrypoints=websecure"
+      - "traefik.http.routers.innexar-training.tls.certresolver=cloudflare"
+      - "traefik.http.services.innexar-training-service.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  innexar-workspace-app:
+    image: ghcr.io/innexar-plat/innexar-workspace-app:latest
+    container_name: innexar-workspace-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: 1
+    env_file:
+      - path: innexar-workspace-app/.env
+        required: false
+    networks:
+      - fixelo_fixelo-network
+    labels:
+      - "innexar.scope=br"
+      - "traefik.enable=true"
+      - "traefik.http.routers.innexar-workspace-app.rule=Host(`app.innexar.com.br`)"
+      - "traefik.http.routers.innexar-workspace-app.entrypoints=websecure"
+      - "traefik.http.routers.innexar-workspace-app.tls.certresolver=cloudflare"
+      - "traefik.http.services.innexar-workspace-app-service.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Workspace API (backend) + dependências
+  innexar-workspace-postgres:
+    image: postgres:15-alpine
+    container_name: innexar-workspace-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-innexar_workspace}
+      POSTGRES_USER: ${POSTGRES_USER:-workspace_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - innexar-workspace
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-workspace_user} -d ${POSTGRES_DB:-innexar_workspace}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  innexar-workspace-minio:
+    image: minio/minio:latest
+    container_name: innexar-workspace-minio
+    restart: unless-stopped
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    networks:
+      - innexar-workspace
+
+  innexar-workspace-backend:
+    image: ghcr.io/innexar-plat/innexar-workspace:latest
+    container_name: innexar-workspace-backend
+    restart: unless-stopped
+    depends_on:
+      innexar-workspace-postgres:
+        condition: service_healthy
+      innexar-workspace-minio:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-workspace_user}:${POSTGRES_PASSWORD:-change_me}@innexar-workspace-postgres:5432/${POSTGRES_DB:-innexar_workspace}
+      SECRET_KEY_STAFF: ${SECRET_KEY_STAFF:-change-me-staff}
+      SECRET_KEY_CUSTOMER: ${SECRET_KEY_CUSTOMER:-change-me-customer}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://innexar.com.br,https://www.innexar.com.br,http://localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-https://innexar.com.br}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-minio}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://innexar-workspace-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET_PROJECTS: ${MINIO_BUCKET_PROJECTS:-project-files}
+    ports:
+      - "8001:8000"
+    networks:
+      - innexar-workspace
+      - fixelo_fixelo-network
+    labels:
+      - "innexar.scope=br"
+      - "traefik.enable=true"
+      - "traefik.http.routers.workspace-api.rule=Host(`api.innexar.com.br`)"
+      - "traefik.http.routers.workspace-api.entrypoints=websecure"
+      - "traefik.http.routers.workspace-api.tls.certresolver=cloudflare"
+      - "traefik.http.services.workspace-api.loadbalancer.server.port=8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  fixelo_fixelo-network:
+    external: true
+  innexar-workspace:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:

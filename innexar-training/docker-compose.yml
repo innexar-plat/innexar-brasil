@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   innexar-training:
-    image: ${IMAGE_REPOSITORY:-ghcr.io/innexar-plat/innexar-brasil}/training:${IMAGE_TAG:-latest}
+    image: ${IMAGE:-ghcr.io/innexar-plat/innexar-training:latest}
     build:
       context: .
       dockerfile: Dockerfile
