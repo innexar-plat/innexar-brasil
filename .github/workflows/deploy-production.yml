@@ -1,0 +1,44 @@
+name: Deploy Production BR
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Docker image tag to deploy
+        required: false
+        default: latest
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_REPOSITORY: ghcr.io/${{ github.repository_owner }}/innexar-brasil
+          PROD_DEPLOY_PATH: ${{ vars.PROD_DEPLOY_PATH }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_PORT }}
+          envs: IMAGE_TAG,IMAGE_REPOSITORY,PROD_DEPLOY_PATH,GHCR_USERNAME,GHCR_TOKEN
+          script: |
+            set -euo pipefail
+            cd "${PROD_DEPLOY_PATH}"
+            echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+            export IMAGE_TAG
+            export IMAGE_REPOSITORY
+            chmod +x scripts/deploy-br.sh
+            ./scripts/deploy-br.sh

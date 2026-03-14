@@ -1,0 +1,56 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /innexar-websitebr
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /innexar-portal
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /innexar-training
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /innexar-workspace-app
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: pip
+    directory: /innexar-workspace/backend
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /innexar-websitebr
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /innexar-portal
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /innexar-training
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /innexar-workspace-app
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /innexar-workspace/backend
+    schedule:
+      interval: weekly
