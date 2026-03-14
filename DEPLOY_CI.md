@@ -52,6 +52,42 @@ docker compose up -d
 
 Requer que a rede `fixelo_fixelo-network` exista (ex.: `docker network create fixelo_fixelo-network`). Cada serviço usa a imagem do seu repo (ex.: `ghcr.io/innexar-plat/innexar-websitebr:latest`).
 
+### Deploy no Coolify
+
+Com os **repositórios individuais**, configure **uma aplicação no Coolify por app**.
+
+#### 1. Criar a aplicação
+
+- **Nova aplicação** → tipo **Public Repository** (ou GitHub).
+- **Repositório:** `innexar-plat/<nome-do-app>` (ex.: `innexar-plat/innexar-websitebr`).
+- **Branch:** `main`.
+- **Build Pack:** **Dockerfile** (cada repo tem `Dockerfile` na raiz após o subtree push).
+- **Dockerfile path:** `Dockerfile` (deixe em branco ou `Dockerfile`).
+- **Base Directory:** deixe vazio (a raiz do repo já é o app).
+
+#### 2. Por app
+
+| App                | Repo no Coolify              | Porta |
+|--------------------|------------------------------|-------|
+| Site Brasil        | innexar-plat/innexar-websitebr | 3000  |
+| Portal             | innexar-plat/innexar-portal    | 3000  |
+| Training           | innexar-plat/innexar-training  | 3000  |
+| Workspace (app)    | innexar-plat/innexar-workspace-app | 3000 |
+| Workspace (API)    | innexar-plat/innexar-workspace   | 8000 |
+
+#### 3. Variáveis de ambiente
+
+No Coolify, em **Environment Variables** do recurso, defina as que o app precisa (ex.: `NEXT_PUBLIC_*`, `RESEND_API_KEY`, `SMTP_*` para o site; `DATABASE_URL`, `SECRET_KEY_*` para o backend).
+
+#### 4. Deploy
+
+- **Deploy** no Coolify faz: clone do repo → `docker build` com o Dockerfile → sobe o container.
+- Para usar imagem já construída pelo GitHub Actions (GHCR), use no Coolify o tipo **Docker Image** (se disponível): imagem `ghcr.io/innexar-plat/innexar-websitebr:latest` e configure login no GHCR nas configurações do servidor.
+
+#### 5. Rede / Traefik
+
+Se usar Traefik no mesmo servidor, configure no Coolify os **domínios** (ex.: `innexar.com.br`, `portal.innexar.com.br`) e deixe o Coolify gerar os labels do Traefik, ou use um **Docker Compose** customizado no Coolify apontando para o `docker-compose.yml` do projeto.
+
 ---
 
 ## Monorepo (workflows na raiz)
