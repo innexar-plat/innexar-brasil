@@ -15,7 +15,9 @@ from app.core.encryption import decrypt_value, encrypt_value
 
 
 async def main() -> None:
-    new_base_url = "https://hosting.innexar.com.br:8083"
+    new_base_url = (
+        os.environ.get("HESTIA_BASE_URL") or "https://hosting.innexar.com.br:8083"
+    ).strip().rstrip("/")
     engine = create_async_engine(settings.DATABASE_URL, echo=False)
     async with engine.begin() as conn:
         r = await conn.execute(
