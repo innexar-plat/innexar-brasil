@@ -1,6 +1,6 @@
-# Innexar Training
+# Innexar Workspace App
 
-Aplicacao web interna de treinamento da Innexar.
+Aplicacao web do workspace da Innexar.
 
 ## Desenvolvimento
 

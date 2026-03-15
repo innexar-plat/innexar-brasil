@@ -14,6 +14,16 @@ Cada app deve ser implantado a partir do seu proprio diretorio base.
 
 Nao use a raiz do monorepo como aplicacao no Coolify.
 
+## Repositorios individuais
+
+Cada app tambem pode ser publicado no seu proprio repositorio com:
+
+```bash
+./scripts/push-to-individual-repos.sh
+```
+
+As pastas ja incluem workflows proprios em `.github/workflows` para que o repo individual rode CI e build de imagem de forma independente.
+
 ## O que fica na raiz
 
 - `docker-compose.yml`: orquestracao do ambiente BR no VPS

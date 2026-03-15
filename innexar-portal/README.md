@@ -1,6 +1,6 @@
-# Innexar Training
+# Innexar Portal
 
-Aplicacao web interna de treinamento da Innexar.
+Portal web da Innexar.
 
 ## Desenvolvimento
 

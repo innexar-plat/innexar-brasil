@@ -73,6 +73,25 @@ Configuracao recomendada no Coolify para cada app:
 
 Observacao: a raiz do monorepo existe para orquestracao, CI e deploy no VPS. Ela nao deve ser usada como alvo direto de build no Coolify.
 
+## Repositorios individuais
+
+Cada pasta de app deste monorepo tambem carrega seus proprios workflows para uso em repositorios individuais via `git subtree push`.
+
+Fluxo recomendado:
+
+1. Atualize o app dentro do monorepo.
+2. Execute `scripts/push-to-individual-repos.sh` para publicar a pasta no repo individual correspondente.
+3. No repo individual, o GitHub Actions roda os workflows locais em `.github/workflows/ci.yml` e `.github/workflows/docker.yml`.
+4. O deploy do app deve ser feito pelo provedor configurado para aquele repo, sem reaproveitar a raiz do monorepo.
+
+Mapeamento de pastas para repositorios:
+
+- `innexar-websitebr` -> `innexar-plat/innexar-websitebr`
+- `innexar-portal` -> `innexar-plat/innexar-portal`
+- `innexar-training` -> `innexar-plat/innexar-training`
+- `innexar-workspace-app` -> `innexar-plat/innexar-workspace-app`
+- `innexar-workspace` -> `innexar-plat/innexar-workspace`
+
 ## Fluxo recomendado
 
 1. Merge em `main` ou `master`.

@@ -52,6 +52,13 @@ chmod +x deploy.sh
 - `npm run start` - Iniciar servidor de produção
 - `npm run lint` - Verificar código
 
+## 🔁 CI
+
+Este app inclui workflows proprios em `.github/workflows` para uso no repositorio individual:
+
+- `ci.yml`: lint, teste e build
+- `docker.yml`: build e publish da imagem no GHCR
+
 ## 📚 Documentação
 
 - [Guia de Deploy](./DEPLOY.md) - Instruções completas para deploy
