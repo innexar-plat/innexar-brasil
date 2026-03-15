@@ -15,11 +15,15 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth_staff import get_current_staff
-from app.core.config import settings
 from app.core.database import AsyncSessionLocal, get_db
 from app.core.security import create_token_staff, hash_password, verify_password
 from app.models.staff_password_reset import StaffPasswordResetToken
 from app.models.user import User
+from app.modules.customers.email_templates import (
+    build_workspace_reset_password_url,
+    normalize_locale,
+    workspace_reset_password_email,
+)
 from app.providers.email.loader import get_email_provider
 from app.schemas.auth import (
     ChangePasswordRequest,
@@ -74,14 +78,8 @@ async def _send_staff_reset_email(
     async with AsyncSessionLocal() as db:
         provider = await get_email_provider(db, org_id=org_id)
         if provider:
-            subject = "Redefinir senha do painel administrativo"
-            body = (
-                f"Você solicitou a redefinição de senha do painel.\n\n"
-                f"Acesse o link abaixo para definir uma nova senha (válido por 24 horas):\n\n"
-                f"{reset_link}\n\n"
-                "Se você não solicitou isso, ignore este e-mail."
-            )
-            provider.send(recipient_email, subject, body, None)
+            subject, body_plain, body_html = workspace_reset_password_email(reset_link)
+            provider.send(recipient_email, subject, body_plain, body_html)
 
 
 @router.post("/auth/staff/forgot-password", status_code=200)
@@ -104,10 +102,8 @@ async def staff_forgot_password(
         )
         db.add(row)
         await db.flush()
-        base_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000").rstrip(
-            "/"
-        )
-        reset_link = f"{base_url}/workspace/reset-password?token={token}"
+        locale = normalize_locale(body.locale)
+        reset_link = build_workspace_reset_password_url(token, locale)
         org_id = user.org_id or "innexar"
         background_tasks.add_task(
             _send_staff_reset_email, email_lower, reset_link, org_id

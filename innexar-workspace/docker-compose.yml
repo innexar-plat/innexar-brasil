@@ -53,6 +53,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://innexar.com.br,https://www.innexar.com.br,https://portal.innexar.com.br,https://app.innexar.com.br}
       FRONTEND_URL: ${FRONTEND_URL:-https://innexar.com.br}
       PORTAL_URL: ${PORTAL_URL:-https://portal.innexar.com.br}
+      WORKSPACE_URL: ${WORKSPACE_URL:-https://app.innexar.com.br}
       SEED_TOKEN: ${SEED_TOKEN:-}
       MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-${MERCADOPAGO_ACCESS_TOKEN:-}}
       MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-${MP_ACCESS_TOKEN:-}}

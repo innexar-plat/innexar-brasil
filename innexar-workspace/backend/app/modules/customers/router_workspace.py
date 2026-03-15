@@ -8,7 +8,6 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.config import settings
 from app.core.database import get_db
 from app.core.rbac import RequirePermission
 from app.core.security import hash_password
@@ -371,14 +370,12 @@ async def _send_credentials_email(
 ) -> None:
     """Send email with portal URL, login and password. Uses new DB session for provider lookup."""
     from app.core.database import AsyncSessionLocal
-    from app.modules.customers.email_templates import portal_credentials_email
-
-    portal_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000").rstrip("/")
-    login_url = (
-        f"{portal_url}/pt/login"
-        if "portal." in portal_url
-        else f"{portal_url}/portal/login"
+    from app.modules.customers.email_templates import (
+        build_portal_login_url,
+        portal_credentials_email,
     )
+
+    login_url = build_portal_login_url("pt")
     subject, body_plain, body_html = portal_credentials_email(
         login_url=login_url,
         recipient_email=recipient_email,

@@ -4,12 +4,15 @@ import secrets
 
 from sqlalchemy import select
 
-from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.core.security import hash_password
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
-from app.modules.customers.email_templates import portal_credentials_email
+from app.modules.customers.email_templates import (
+    build_portal_login_url,
+    build_portal_site_briefing_url,
+    portal_credentials_email,
+)
 from app.providers.email.loader import get_email_provider
 
 
@@ -46,19 +49,8 @@ async def send_portal_credentials_after_payment(
                 db.add(cu)
                 await db.flush()
             await db.commit()
-            portal_url = getattr(
-                settings, "FRONTEND_URL", "http://localhost:3000"
-            ).rstrip("/")
-            login_url = (
-                f"{portal_url}/pt/login"
-                if "portal." in portal_url
-                else f"{portal_url}/portal/login"
-            )
-            briefing_url = (
-                f"{portal_url}/pt/site-briefing"
-                if "portal." in portal_url
-                else f"{portal_url}/portal/site-briefing"
-            )
+            login_url = build_portal_login_url("pt")
+            briefing_url = build_portal_site_briefing_url("pt")
             subject, body_plain, body_html = portal_credentials_email(
                 login_url=login_url,
                 recipient_email=email,

@@ -51,6 +51,7 @@ class ForgotPasswordRequest(BaseModel):
     """Staff or customer: request password reset (email only)."""
 
     email: EmailStr
+    locale: str | None = None
 
 
 class StaffResetPasswordRequest(BaseModel):

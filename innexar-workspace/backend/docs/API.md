@@ -47,7 +47,7 @@ O frontend deve usar `GET /api/portal/me/features` para decidir o que exibir no 
 
 - **POST /api/workspace/auth/staff/login**: body `{ "email", "password" }`. Retorna JWT para rotas `/api/workspace/*`.
 - **GET /api/workspace/me**: perfil do staff logado (id, email, role, org_id). Requer Bearer (staff).
-- **POST /api/workspace/auth/staff/forgot-password**: body `{ "email" }`. Se existir conta, envia e-mail com link para `/{locale}/workspace/reset-password?token=...`. Resposta sempre 200.
+- **POST /api/workspace/auth/staff/forgot-password**: body `{ "email", "locale"? }`. Se existir conta, envia e-mail com link para `/{locale}/reset-password?token=...` na URL base de `WORKSPACE_URL` (fallback: `FRONTEND_URL`). Resposta sempre 200.
 - **POST /api/workspace/auth/staff/reset-password**: body `{ "token", "new_password" }`. Redefine senha do staff; token válido por 24h.
 - **PATCH /api/workspace/me/password**: body `{ "current_password", "new_password" }`. Altera senha do staff logado. Requer Bearer (staff).
 
@@ -59,7 +59,7 @@ O frontend deve usar `GET /api/portal/me/features` para decidir o que exibir no 
 
 ## Portal – Autenticação (público e autenticado)
 
-- **POST /api/public/auth/customer/forgot-password**: body `{ "email": "..." }`. Gera token de recuperação, persiste e envia link por e-mail (ex.: `/{locale}/portal/reset-password?token=...`). Resposta genérica (não revela se o e-mail existe).
+- **POST /api/public/auth/customer/forgot-password**: body `{ "email": "...", "locale"? }`. Gera token de recuperação, persiste e envia link por e-mail (ex.: `/{locale}/reset-password?token=...`) na URL base de `PORTAL_URL` (fallback: `FRONTEND_URL`). Resposta genérica (não revela se o e-mail existe).
 - **POST /api/public/auth/customer/reset-password**: body `{ "token": "...", "new_password": "..." }`. Valida token, atualiza senha do CustomerUser e invalida o token.
 - **PATCH /api/portal/me/password**: body `{ "current_password", "new_password" }`. Altera senha do cliente logado. Requer Bearer (cliente).
 

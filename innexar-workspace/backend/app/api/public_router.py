@@ -19,11 +19,15 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import log_audit
-from app.core.config import settings
 from app.core.database import AsyncSessionLocal, get_db
 from app.core.security import create_token_customer, hash_password, verify_password
 from app.models.customer_password_reset import CustomerPasswordResetToken
 from app.models.customer_user import CustomerUser
+from app.modules.customers.email_templates import (
+    build_portal_reset_password_url,
+    normalize_locale,
+    portal_reset_password_email,
+)
 from app.modules.crm.models import Contact
 from app.providers.email.loader import get_email_provider
 from app.schemas.auth import CustomerLoginResponse, LoginRequest
@@ -88,6 +92,7 @@ class ForgotPasswordRequest(BaseModel):
     """Portal: forgot password (email)."""
 
     email: EmailStr
+    locale: str | None = None
 
 
 class ResetPasswordRequest(BaseModel):
@@ -102,14 +107,8 @@ async def _send_reset_email(recipient_email: str, reset_link: str, org_id: str) 
     async with AsyncSessionLocal() as db:
         provider = await get_email_provider(db, org_id=org_id)
         if provider:
-            subject = "Redefinir senha do portal"
-            body = (
-                f"Você solicitou a redefinição de senha.\n\n"
-                f"Acesse o link abaixo para definir uma nova senha (válido por 24 horas):\n\n"
-                f"{reset_link}\n\n"
-                "Se você não solicitou isso, ignore este e-mail."
-            )
-            provider.send(recipient_email, subject, body, None)
+            subject, body_plain, body_html = portal_reset_password_email(reset_link)
+            provider.send(recipient_email, subject, body_plain, body_html)
 
 
 @router.post("/auth/customer/forgot-password", status_code=200)
@@ -134,10 +133,8 @@ async def customer_forgot_password(
         )
         db.add(row)
         await db.flush()
-        base_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000").rstrip(
-            "/"
-        )
-        reset_link = f"{base_url}/portal/reset-password?token={token}"
+        locale = normalize_locale(body.locale)
+        reset_link = build_portal_reset_password_url(token, locale)
         background_tasks.add_task(_send_reset_email, email_lower, reset_link, "innexar")
     return {
         "message": "If an account exists with this email, you will receive a reset link."

@@ -100,8 +100,8 @@ Em ambos os casos, o backend que gera o link de pagamento e processa webhooks é
 ## 5. Configuração do backend (e-mails e links)
 
 - **FRONTEND_URL:** No backend (innexar-workspace), a variável **FRONTEND_URL** deve ser a URL do **website** (ex.: `https://innexar.com.br`), não a do portal nem do workspace. Ela é usada nos e-mails de recuperação de senha para montar os links:
-  - Cliente: `{FRONTEND_URL}/portal/reset-password?token=...`
-  - Staff: `{FRONTEND_URL}/workspace/reset-password?token=...`
+  - Cliente: `{PORTAL_URL}/{locale}/reset-password?token=...` (fallback: `{FRONTEND_URL}/{locale}/reset-password?token=...`)
+  - Staff: `{WORKSPACE_URL}/{locale}/reset-password?token=...` (fallback: `{FRONTEND_URL}/{locale}/reset-password?token=...`)
   O usuário clica no link no website; o redirect do `next.config.ts` envia para o portal ou workspace com o path preservado (ex.: `https://portal.innexar.com.br/pt/reset-password?token=...`). Verificar em produção que o redirect preserva a query string.
 
 - **Feature flags:** O portal respeita as flags `billing.enabled` (ou `portal.invoices.enabled`), `portal.tickets.enabled` e `portal.projects.enabled`. O frontend usa `GET /api/portal/me/features` para exibir ou ocultar itens de menu (faturas, suporte, projetos).

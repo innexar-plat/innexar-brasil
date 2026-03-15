@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
     # Base URL for portal (payment success/cancel redirects). If not set, falls back to FRONTEND_URL or portal.innexar.com.br
     PORTAL_URL: str | None = None
+    # Base URL for workspace app (staff login/reset links).
+    WORKSPACE_URL: str | None = None
 
     # Encryption for integration secrets (Fernet key, base64)
     ENCRYPTION_KEY: str | None = None
