@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Update Hestia integration base_url in DB. Uses raw SQL to avoid ORM model loading."""
+"""Update Hestia integration base_url in DB.
+
+Uses raw SQL to avoid ORM model loading.
+If HESTIA_BASE_URL is defined, it is used; otherwise the default Innexar URL is applied.
+"""
 import asyncio
 import json
 import os
