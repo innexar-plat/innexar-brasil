@@ -1,5 +1,5 @@
 # Dev: apenas deps; o código é montado por volume. Hot-reload com npm run dev.
-FROM node:20-alpine
+FROM node:25-alpine
 
 WORKDIR /app
 
