@@ -35,7 +35,7 @@ services:
       - innexar-workspace
 
   backend:
-    image: ${IMAGE:-ghcr.io/innexar-plat/innexar-workspace:latest}
+    image: ${IMAGE_REPOSITORY:-ghcr.io/innexar-plat/innexar-brasil}/workspace-backend:${IMAGE_TAG:-latest}
     build: ./backend
     container_name: innexar-workspace-backend
     restart: unless-stopped

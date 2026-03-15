@@ -1,102 +1,29 @@
 # Innexar Brasil CI/CD
 
-Este stack suporta dois fluxos: **monorepo** (CI na raiz) e **repositórios individuais** (cada app com seu repo e CI próprio). O deploy em produção usa Docker Compose com imagens do GHCR.
+Este stack foi preparado para um fluxo de qualidade + publish de imagens + deploy em producao sem rebuild no servidor.
 
-## Repositórios individuais (recomendado)
+## Workflows
 
-Cada app pode ser desenvolvido e implantado a partir do seu próprio repositório.
+- `quality.yml`: lint, testes, build e validacao de compose.
+- `docker-images.yml`: build e publish de imagens em `ghcr.io`.
+- `codeql.yml`: analise estatica de seguranca para JavaScript/TypeScript e Python.
+- `trivy.yml`: varredura de vulnerabilidades e misconfiguracoes.
+- `deploy-production.yml`: deploy manual para o VPS de producao BR.
 
-### Criar os repositórios no GitHub
+## Imagens publicadas
 
-Crie repositórios **vazios** (sem README, sem .gitignore) na organização `innexar-plat`:
+As imagens sao publicadas em:
 
-- `innexar-plat/innexar-websitebr`
-- `innexar-plat/innexar-portal`
-- `innexar-plat/innexar-training`
-- `innexar-plat/innexar-workspace-app`
-- `innexar-plat/innexar-workspace`
+- `ghcr.io/innexar-plat/innexar-brasil/websitebr`
+- `ghcr.io/innexar-plat/innexar-brasil/portal`
+- `ghcr.io/innexar-plat/innexar-brasil/training`
+- `ghcr.io/innexar-plat/innexar-brasil/workspace-app`
+- `ghcr.io/innexar-plat/innexar-brasil/workspace-backend`
 
-### Push do monorepo para os repos individuais
+Cada imagem recebe pelo menos estas tags:
 
-A partir da raiz do monorepo (`Innexar-Brasil`):
-
-```bash
-./scripts/push-to-individual-repos.sh
-```
-
-O script usa `git subtree push`: cada pasta (ex.: `innexar-websitebr`) é enviada para o repo correspondente na branch `main`. Execute após commits no monorepo para espelhar o código nos repos individuais.
-
-### CI em cada repo
-
-Cada repositório individual contém em sua raiz (após o subtree push):
-
-- `.github/workflows/ci.yml`: lint, testes (quando houver), build.
-- `.github/workflows/docker.yml`: build e push da imagem para `ghcr.io/innexar-plat/<nome-do-repo>`.
-
-As imagens passam a ser publicadas em:
-
-- `ghcr.io/innexar-plat/innexar-websitebr`
-- `ghcr.io/innexar-plat/innexar-portal`
-- `ghcr.io/innexar-plat/innexar-training`
-- `ghcr.io/innexar-plat/innexar-workspace-app`
-- `ghcr.io/innexar-plat/innexar-workspace` (backend da API)
-
-### Docker Compose na raiz do monorepo
-
-O arquivo `docker-compose.yml` na raiz usa **apenas imagens** (sem build), puxadas do GHCR:
-
-```bash
-docker compose pull
-docker compose up -d
-```
-
-Requer que a rede `fixelo_fixelo-network` exista (ex.: `docker network create fixelo_fixelo-network`). Cada serviço usa a imagem do seu repo (ex.: `ghcr.io/innexar-plat/innexar-websitebr:latest`).
-
-### Deploy no Coolify
-
-Com os **repositórios individuais**, configure **uma aplicação no Coolify por app**.
-
-#### 1. Criar a aplicação
-
-- **Nova aplicação** → tipo **Public Repository** (ou GitHub).
-- **Repositório:** `innexar-plat/<nome-do-app>` (ex.: `innexar-plat/innexar-websitebr`).
-- **Branch:** `main`.
-- **Build Pack:** **Dockerfile** (cada repo tem `Dockerfile` na raiz após o subtree push).
-- **Dockerfile path:** `Dockerfile` (deixe em branco ou `Dockerfile`).
-- **Base Directory:** deixe vazio (a raiz do repo já é o app).
-
-#### 2. Por app
-
-| App                | Repo no Coolify              | Porta |
-|--------------------|------------------------------|-------|
-| Site Brasil        | innexar-plat/innexar-websitebr | 3000  |
-| Portal             | innexar-plat/innexar-portal    | 3000  |
-| Training           | innexar-plat/innexar-training  | 3000  |
-| Workspace (app)    | innexar-plat/innexar-workspace-app | 3000 |
-| Workspace (API)    | innexar-plat/innexar-workspace   | 8000 |
-
-#### 3. Variáveis de ambiente
-
-No Coolify, em **Environment Variables** do recurso, defina as que o app precisa (ex.: `NEXT_PUBLIC_*`, `RESEND_API_KEY`, `SMTP_*` para o site; `DATABASE_URL`, `SECRET_KEY_*` para o backend).
-
-#### 4. Deploy
-
-- **Deploy** no Coolify faz: clone do repo → `docker build` com o Dockerfile → sobe o container.
-- Para usar imagem já construída pelo GitHub Actions (GHCR), use no Coolify o tipo **Docker Image** (se disponível): imagem `ghcr.io/innexar-plat/innexar-websitebr:latest` e configure login no GHCR nas configurações do servidor.
-
-#### 5. Rede / Traefik
-
-Se usar Traefik no mesmo servidor, configure no Coolify os **domínios** (ex.: `innexar.com.br`, `portal.innexar.com.br`) e deixe o Coolify gerar os labels do Traefik, ou use um **Docker Compose** customizado no Coolify apontando para o `docker-compose.yml` do projeto.
-
----
-
-## Monorepo (workflows na raiz)
-
-- `quality.yml`: lint, testes, build e validação de compose para todos os apps.
-- `docker-images.yml`: build e publish de imagens em `ghcr.io/innexar-plat/innexar-brasil/<nome>` (formato antigo).
-- `codeql.yml`, `trivy.yml`, `deploy-production.yml`: segurança e deploy.
-
-Cada imagem recebe as tags `latest` e `sha-<commit>`.
+- `latest`
+- `sha-<commit>`
 
 ## Secrets obrigatorios
 
