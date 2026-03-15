@@ -8,7 +8,7 @@
 
 services:
   innexar-websitebr:
-    image: ghcr.io/innexar-plat/innexar-websitebr:latest
+    image: ${IMAGE_REPOSITORY:-ghcr.io/innexar-plat/innexar-brasil}/websitebr:${IMAGE_TAG:-latest}
     container_name: innexar-websitebr
     restart: unless-stopped
     environment:
@@ -36,7 +36,7 @@ services:
       start_period: 40s
 
   innexar-portal:
-    image: ghcr.io/innexar-plat/innexar-portal:latest
+    image: ${IMAGE_REPOSITORY:-ghcr.io/innexar-plat/innexar-brasil}/portal:${IMAGE_TAG:-latest}
     container_name: innexar-portal
     restart: unless-stopped
     environment:
@@ -63,7 +63,7 @@ services:
       start_period: 40s
 
   innexar-training:
-    image: ghcr.io/innexar-plat/innexar-training:latest
+    image: ${IMAGE_REPOSITORY:-ghcr.io/innexar-plat/innexar-brasil}/training:${IMAGE_TAG:-latest}
     container_name: innexar-training
     restart: unless-stopped
     environment:
@@ -87,7 +87,7 @@ services:
       start_period: 40s
 
   innexar-workspace-app:
-    image: ghcr.io/innexar-plat/innexar-workspace-app:latest
+    image: ${IMAGE_REPOSITORY:-ghcr.io/innexar-plat/innexar-brasil}/workspace-app:${IMAGE_TAG:-latest}
     container_name: innexar-workspace-app
     restart: unless-stopped
     environment:
@@ -146,7 +146,7 @@ services:
       - innexar-workspace
 
   innexar-workspace-backend:
-    image: ghcr.io/innexar-plat/innexar-workspace:latest
+    image: ${IMAGE_REPOSITORY:-ghcr.io/innexar-plat/innexar-brasil}/workspace-backend:${IMAGE_TAG:-latest}
     container_name: innexar-workspace-backend
     restart: unless-stopped
     depends_on:

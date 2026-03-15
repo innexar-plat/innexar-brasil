@@ -52,6 +52,27 @@ O repositorio deve existir no servidor em `${PROD_DEPLOY_PATH}` com esta estrutu
 - `innexar-workspace`
 - `scripts/deploy-br.sh`
 
+## Coolify por app
+
+Cada aplicacao no Coolify deve apontar para o seu proprio diretorio base dentro do monorepo. Nao use a raiz do repositorio como app deployavel.
+
+Use esta matriz:
+
+- `innexar-websitebr` -> Base Directory: `innexar-websitebr`
+- `innexar-portal` -> Base Directory: `innexar-portal`
+- `innexar-training` -> Base Directory: `innexar-training`
+- `innexar-workspace-app` -> Base Directory: `innexar-workspace-app`
+- `innexar-workspace` -> Base Directory: `innexar-workspace`
+
+Configuracao recomendada no Coolify para cada app:
+
+- Build Pack: `Dockerfile`
+- Dockerfile Path: `Dockerfile`
+- Branch: `main`
+- Base Directory: a pasta do app correspondente
+
+Observacao: a raiz do monorepo existe para orquestracao, CI e deploy no VPS. Ela nao deve ser usada como alvo direto de build no Coolify.
+
 ## Fluxo recomendado
 
 1. Merge em `main` ou `master`.
