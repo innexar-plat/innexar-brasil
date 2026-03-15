@@ -856,5 +856,106 @@
       },
       "footerNote": "Esta política de Privacidad está sujeta a cambios. Por favor, revísela periódicamente."
     }
+  },
+  "criarSite": {
+    "hero": {
+      "badge": "Creación de sitios profesionales en 48h",
+      "title": "Creación de sitio profesional para su empresa en hasta 48 horas.",
+      "subtitle": "Creamos su sitio profesional: rápido, optimizado para Google y listo para generar clientes. Diseño moderno y soporte incluido.",
+      "ctaCreate": "Crear mi sitio",
+      "ctaWhatsApp": "Hablar por WhatsApp",
+      "priceStrip": "Creación de sitio profesional - Desde R$ 197/mes",
+      "benefits": ["Optimizado para Google", "Diseño profesional de sitios", "100% responsivo", "Integración con WhatsApp"]
+    },
+    "forWho": {
+      "title": "Creación de sitios para",
+      "items": ["Abogados", "Médicos", "Clínicas", "Contadores", "Empresas locales", "Prestadores de servicios"]
+    },
+    "plans": {
+      "title": "Planes",
+      "essential": {
+        "name": "Sitio Esencial",
+        "price": "197",
+        "period": "/mes",
+        "delivery": "Entrega en 48 horas",
+        "cta": "Crear mi sitio",
+        "features": [
+          "Sitio institucional",
+          "Hasta 5 páginas",
+          "Diseño profesional",
+          "Responsivo (móvil y escritorio)",
+          "Integración con WhatsApp",
+          "SEO básico",
+          "Hosting incluido",
+          "SSL",
+          "Mantenimiento y soporte"
+        ]
+      },
+      "complete": {
+        "name": "Sitio Completo",
+        "price": "297",
+        "period": "/mes",
+        "delivery": "Entrega en 72 horas",
+        "cta": "Crear mi sitio",
+        "features": [
+          "Todo lo del plan Esencial",
+          "Blog integrado",
+          "Sistema de agendamiento",
+          "Panel administrativo",
+          "SEO avanzado",
+          "Integraciones",
+          "Estructura para crecimiento"
+        ]
+      },
+      "custom": {
+        "name": "Personalizado",
+        "description": "Proyecto a medida para su empresa.",
+        "cta": "Hablar por WhatsApp"
+      }
+    },
+    "included": {
+      "title": "Qué está incluido",
+      "items": [
+        "Desarrollo del sitio",
+        "Hosting profesional",
+        "Certificado SSL",
+        "Mantenimiento continuo",
+        "Respaldo automático",
+        "Soporte técnico"
+      ]
+    },
+    "process": {
+      "title": "Cómo funciona",
+      "steps": [
+        { "title": "Elija su plan", "desc": "Seleccione el plan ideal para su empresa." },
+        { "title": "Cree su cuenta", "desc": "Complete la información de su negocio." },
+        { "title": "Envíe datos del sitio", "desc": "Nombre, servicios, logo y contactos." },
+        { "title": "Reciba su sitio listo", "desc": "Su sitio se entrega en hasta 48 o 72 horas." }
+      ]
+    },
+    "examples": {
+      "title": "Ejemplos de sitios",
+      "demos": ["Abogado", "Clínica", "Empresa", "Prestador de servicios"]
+    },
+    "testimonials": {
+      "title": "Testimonios",
+      "quote": "Nuestro sitio quedó listo en dos días y ya estamos recibiendo contactos."
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "q1": "¿El dominio está incluido?",
+      "a1": "Podemos usar su dominio o registrar uno nuevo.",
+      "q2": "¿Puedo cancelar cuando quiera?",
+      "a2": "Los planes tienen permanencia mínima de 12 meses.",
+      "q3": "¿Puedo solicitar cambios?",
+      "a3": "Sí, pequeños cambios están incluidos.",
+      "q4": "¿El sitio aparece en Google?",
+      "a4": "Sí, todos los sitios están optimizados para SEO."
+    },
+    "ctaFinal": {
+      "title": "Deje de perder clientes frente a la competencia.",
+      "subtitle": "Creación de sitio profesional: rápida, con SEO y soporte.",
+      "cta": "Crear mi sitio"
+    }
   }
 }

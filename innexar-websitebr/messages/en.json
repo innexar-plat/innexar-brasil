@@ -2352,5 +2352,106 @@
       },
       "footerNote": "This privacy policy is subject to change. Please review it periodically."
     }
+  },
+  "criarSite": {
+    "hero": {
+      "badge": "Professional website creation in 48h",
+      "title": "Professional website creation for your business in up to 48 hours.",
+      "subtitle": "We build your professional website quickly, optimized for Google and ready to generate leads. Modern design with support included.",
+      "ctaCreate": "Create my website",
+      "ctaWhatsApp": "Talk on WhatsApp",
+      "priceStrip": "Professional website creation - Starting at R$ 197/month",
+      "benefits": ["Google optimized", "Professional website design", "100% responsive", "WhatsApp integration"]
+    },
+    "forWho": {
+      "title": "Website creation for",
+      "items": ["Lawyers", "Doctors", "Clinics", "Accountants", "Local businesses", "Service providers"]
+    },
+    "plans": {
+      "title": "Plans",
+      "essential": {
+        "name": "Essential Site",
+        "price": "197",
+        "period": "/month",
+        "delivery": "Delivery in 48 hours",
+        "cta": "Create my website",
+        "features": [
+          "Institutional website",
+          "Up to 5 pages",
+          "Professional design",
+          "Responsive (mobile and desktop)",
+          "WhatsApp integration",
+          "Basic SEO",
+          "Hosting included",
+          "SSL",
+          "Maintenance and support"
+        ]
+      },
+      "complete": {
+        "name": "Complete Site",
+        "price": "297",
+        "period": "/month",
+        "delivery": "Delivery in 72 hours",
+        "cta": "Create my website",
+        "features": [
+          "Everything in Essential plan",
+          "Integrated blog",
+          "Scheduling system",
+          "Admin panel",
+          "Advanced SEO",
+          "Integrations",
+          "Growth-ready structure"
+        ]
+      },
+      "custom": {
+        "name": "Custom",
+        "description": "Tailor-made project for your business.",
+        "cta": "Talk on WhatsApp"
+      }
+    },
+    "included": {
+      "title": "What's included",
+      "items": [
+        "Website development",
+        "Professional hosting",
+        "SSL certificate",
+        "Ongoing maintenance",
+        "Automatic backup",
+        "Technical support"
+      ]
+    },
+    "process": {
+      "title": "How it works",
+      "steps": [
+        { "title": "Choose your plan", "desc": "Select the ideal plan for your business." },
+        { "title": "Create your account", "desc": "Fill in your business information." },
+        { "title": "Send website data", "desc": "Name, services, logo and contacts." },
+        { "title": "Receive your ready site", "desc": "Your website is delivered within 48 or 72 hours." }
+      ]
+    },
+    "examples": {
+      "title": "Website examples",
+      "demos": ["Lawyer", "Clinic", "Company", "Service provider"]
+    },
+    "testimonials": {
+      "title": "Testimonials",
+      "quote": "Our website was ready in two days and we are already receiving contacts."
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "q1": "Is domain included?",
+      "a1": "We can use your domain or register a new one.",
+      "q2": "Can I cancel anytime?",
+      "a2": "Plans have a minimum term of 12 months.",
+      "q3": "Can I request changes?",
+      "a3": "Yes, small changes are included.",
+      "q4": "Will my site appear on Google?",
+      "a4": "Yes, all websites are SEO-optimized."
+    },
+    "ctaFinal": {
+      "title": "Stop losing clients to competitors.",
+      "subtitle": "Professional website creation: fast, SEO-ready and with support.",
+      "cta": "Create my website"
+    }
   }
 }

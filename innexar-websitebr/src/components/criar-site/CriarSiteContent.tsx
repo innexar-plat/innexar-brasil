@@ -9,19 +9,38 @@ import { useSiteConfig } from '@/contexts/SiteConfigContext';
 const WHATSAPP_FALLBACK = '5513991821557';
 const WHATSAPP_SITE_MSG = 'Olá! Gostaria de criar meu site profissional.';
 
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+function asProcessSteps(value: unknown): { title: string; desc: string }[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .filter(
+      (item): item is { title: string; desc: string } =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof (item as { title?: unknown }).title === 'string' &&
+        typeof (item as { desc?: unknown }).desc === 'string',
+    )
+    .map((item) => ({ title: item.title, desc: item.desc }));
+}
+
 export default function CriarSiteContent() {
   const t = useTranslations('criarSite');
   const { config } = useSiteConfig();
   const whatsappNumber = config.site_whatsapp_br?.replace(/\D/g, '') || config.site_phone_br?.replace(/\D/g, '') || WHATSAPP_FALLBACK;
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(WHATSAPP_SITE_MSG)}`;
 
-  const benefits = (t.raw('hero.benefits') as string[]) ?? [];
-  const forWhoItems = (t.raw('forWho.items') as string[]) ?? [];
-  const includedItems = (t.raw('included.items') as string[]) ?? [];
-  const processSteps = (t.raw('process.steps') as { title: string; desc: string }[]) ?? [];
-  const demos = (t.raw('examples.demos') as string[]) ?? [];
-  const essentialFeatures = (t.raw('plans.essential.features') as string[]) ?? [];
-  const completeFeatures = (t.raw('plans.complete.features') as string[]) ?? [];
+  const benefits = asStringArray(t.raw('hero.benefits'));
+  const forWhoItems = asStringArray(t.raw('forWho.items'));
+  const includedItems = asStringArray(t.raw('included.items'));
+  const processSteps = asProcessSteps(t.raw('process.steps'));
+  const demos = asStringArray(t.raw('examples.demos'));
+  const essentialFeatures = asStringArray(t.raw('plans.essential.features'));
+  const completeFeatures = asStringArray(t.raw('plans.complete.features'));
 
   return (
     <>
