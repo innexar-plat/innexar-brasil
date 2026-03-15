@@ -31,5 +31,5 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-# Default: run API; override to run tests: docker run ... pytest tests/ -v
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default: run deploy bootstrap tasks and then API.
+CMD ["sh", "-c", "python scripts/deploy_bootstrap.py && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
