@@ -1,5 +1,5 @@
 # Dockerfile produção - Innexar Workspace App
-FROM node:20-alpine AS dev
+FROM node:25-alpine AS dev
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci --no-audit --fund=false
@@ -8,7 +8,7 @@ EXPOSE 3000
 ENV HOSTNAME=0.0.0.0
 CMD ["npm", "run", "dev"]
 
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ ENV NEXT_PUBLIC_WORKSPACE_API_URL=$NEXT_PUBLIC_WORKSPACE_API_URL
 
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:25-alpine AS runner
 
 WORKDIR /app
 
