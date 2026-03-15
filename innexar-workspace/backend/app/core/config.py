@@ -17,6 +17,8 @@ class Settings(BaseSettings):
         "postgresql+asyncpg://workspace_user:change_me@localhost:5432/innexar_workspace"
     )
     DATABASE_URL_TEST: str | None = None
+    DB_STARTUP_MAX_ATTEMPTS: int = 12
+    DB_STARTUP_RETRY_DELAY_SECONDS: float = 5.0
 
     # Redis (optional)
     REDIS_URL: str = "redis://localhost:6379"

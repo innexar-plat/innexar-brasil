@@ -1,5 +1,6 @@
 """Innexar Workspace API - 3-layer backend."""
 
+import asyncio
 import logging
 import re
 from contextlib import asynccontextmanager
@@ -73,13 +74,53 @@ from app.modules.system.router_workspace import (
     seed_router as system_seed_router,
 )
 
+logger = logging.getLogger(__name__)
+
+
+async def initialize_database() -> None:
+    """Run the database bootstrap required before serving requests."""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    await ensure_mp_subscription_schema()
+
+
+async def initialize_database_with_retries() -> None:
+    """Wait for the database during startup, then fail if it never becomes ready."""
+    max_attempts = max(settings.DB_STARTUP_MAX_ATTEMPTS, 1)
+    retry_delay = max(settings.DB_STARTUP_RETRY_DELAY_SECONDS, 0.0)
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            await initialize_database()
+            if attempt > 1:
+                logger.info(
+                    "Database startup initialization succeeded on attempt %s/%s",
+                    attempt,
+                    max_attempts,
+                )
+            return
+        except Exception:
+            if attempt == max_attempts:
+                logger.exception(
+                    "Database startup initialization failed after %s attempt(s)",
+                    max_attempts,
+                )
+                raise
+            logger.warning(
+                "Database not ready during startup; retrying in %.1fs (%s/%s)",
+                retry_delay,
+                attempt,
+                max_attempts,
+                exc_info=True,
+            )
+            if retry_delay > 0:
+                await asyncio.sleep(retry_delay)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Create tables on startup (for MVP; use Alembic in production)."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    await ensure_mp_subscription_schema()
+    await initialize_database_with_retries()
     yield
     await engine.dispose()
 
