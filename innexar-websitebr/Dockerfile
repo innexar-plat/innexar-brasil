@@ -2,7 +2,7 @@
 # Build multi-stage para otimizar tamanho da imagem
 
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 
@@ -31,7 +31,7 @@ ENV NEXT_PUBLIC_WORKSPACE_URL=$NEXT_PUBLIC_WORKSPACE_URL
 RUN npm run build
 
 # Stage 2: Production
-FROM node:20-alpine AS runner
+FROM node:25-alpine AS runner
 
 WORKDIR /app
 
