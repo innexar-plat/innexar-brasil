@@ -47,6 +47,7 @@ async def create_ticket(
     project_id = body.project_id
     if project_id is not None:
         from app.modules.projects.models import Project
+
         r = await db.execute(
             select(Project).where(
                 Project.id == project_id,
@@ -54,7 +55,9 @@ async def create_ticket(
             )
         )
         if not r.scalar_one_or_none():
-            raise HTTPException(status_code=400, detail="Project not found or not yours")
+            raise HTTPException(
+                status_code=400, detail="Project not found or not yours"
+            )
     category = (body.category or "suporte").strip() or "suporte"
     t = Ticket(
         customer_id=current.customer_id,
@@ -107,7 +110,9 @@ async def list_my_ticket_messages(
     if not t:
         raise HTTPException(status_code=404, detail="Ticket not found")
     r2 = await db.execute(
-        select(TicketMessage).where(TicketMessage.ticket_id == ticket_id).order_by(TicketMessage.id)
+        select(TicketMessage)
+        .where(TicketMessage.ticket_id == ticket_id)
+        .order_by(TicketMessage.id)
     )
     return list(r2.scalars().all())
 

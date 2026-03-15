@@ -1,4 +1,5 @@
 """CRM models: Contact."""
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -24,10 +25,13 @@ class Contact(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
     phone: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    customer: Mapped["Customer | None"] = relationship("Customer", back_populates="contacts")
-
+    customer: Mapped["Customer | None"] = relationship(
+        "Customer", back_populates="contacts"
+    )

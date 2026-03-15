@@ -1,4 +1,5 @@
 """Stripe payment provider."""
+
 import os
 from typing import Any
 
@@ -73,11 +74,16 @@ class StripeProvider:
             raise RuntimeError("stripe package not installed")
         secret = _get_webhook_secret()
         if not secret:
-            return WebhookResult(processed=False, message="webhook secret not configured")
+            return WebhookResult(
+                processed=False, message="webhook secret not configured"
+            )
         sig = headers.get("stripe-signature", "")
         try:
             event = stripe.Webhook.construct_event(body, sig, secret)
-        except (ValueError, getattr(stripe, "SignatureVerificationError", ValueError)) as e:
+        except (
+            ValueError,
+            getattr(stripe, "SignatureVerificationError", ValueError),
+        ) as e:
             return WebhookResult(processed=False, message=str(e))
         event_id = event.get("id", "")
         event_type = event.get("type", "")
@@ -86,5 +92,7 @@ class StripeProvider:
             metadata = session.get("metadata", {}) or {}
             invoice_id_str = metadata.get("invoice_id")
             invoice_id = int(invoice_id_str) if invoice_id_str else None
-            return WebhookResult(processed=True, invoice_id=invoice_id, message=event_id)
+            return WebhookResult(
+                processed=True, invoice_id=invoice_id, message=event_id
+            )
         return WebhookResult(processed=True, message=event_id)

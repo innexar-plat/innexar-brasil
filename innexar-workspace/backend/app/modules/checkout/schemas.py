@@ -1,4 +1,5 @@
 """Checkout public API schemas."""
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -12,7 +13,9 @@ class CheckoutStartRequest(BaseModel):
     customer_phone: str | None = None
     success_url: str
     cancel_url: str
-    domain: str | None = None  # Required when product.provisioning_type == hestia_hosting
+    domain: str | None = (
+        None  # Required when product.provisioning_type == hestia_hosting
+    )
 
     # Bricks Payment Brick fields (token is optional for Pix)
     token: str | None = None
@@ -33,7 +36,7 @@ class CheckoutStartResponse(BaseModel):
     payment_id: str | None = None  # MP payment id
     existing_customer: bool = False
     error_message: str | None = None  # User-friendly error if payment rejected
-    
+
     # Pix / Ticket response fields
     qr_code_base64: str | None = None
     qr_code: str | None = None

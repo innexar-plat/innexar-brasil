@@ -2,6 +2,7 @@
 - Checkout Pro: one payment link per invoice (create_payment_link).
 - Assinaturas: create_subscription_plan returns init_point; customer subscribes on MP, we sync via webhook.
 """
+
 import json
 import logging
 import os
@@ -24,7 +25,9 @@ class SubscriptionPlanResult:
 
 
 def _get_access_token() -> str | None:
-    raw = os.environ.get("MP_ACCESS_TOKEN") or os.environ.get("MERCADOPAGO_ACCESS_TOKEN")
+    raw = os.environ.get("MP_ACCESS_TOKEN") or os.environ.get(
+        "MERCADOPAGO_ACCESS_TOKEN"
+    )
     return raw.strip() if raw else None
 
 
@@ -56,7 +59,9 @@ class MercadoPagoProvider:
         )
         # #endregion
         if not self._access_token:
-            raise ValueError("Mercado Pago not configured; set MP_ACCESS_TOKEN or use IntegrationConfig")
+            raise ValueError(
+                "Mercado Pago not configured; set MP_ACCESS_TOKEN or use IntegrationConfig"
+            )
         currency_id = (currency or "BRL").upper()[:3]
         # Checkout Pro redirect: layout/alignment are controlled by Mercado Pago; we only send preference data.
         payload = {
@@ -97,7 +102,9 @@ class MercadoPagoProvider:
             if payer:
                 payload["payer"] = payer
         # notification_url must be set in dashboard or here; caller can pass via env
-        notification_url = os.environ.get("MP_NOTIFICATION_URL") or os.environ.get("MERCADOPAGO_NOTIFICATION_URL")
+        notification_url = os.environ.get("MP_NOTIFICATION_URL") or os.environ.get(
+            "MERCADOPAGO_NOTIFICATION_URL"
+        )
         if notification_url:
             payload["notification_url"] = notification_url
 
@@ -115,11 +122,16 @@ class MercadoPagoProvider:
             debug_log(
                 "mercadopago.create_payment_link",
                 "MP API non-201",
-                {"status_code": resp.status_code, "text_preview": (resp.text or "")[:150]},
+                {
+                    "status_code": resp.status_code,
+                    "text_preview": (resp.text or "")[:150],
+                },
                 "D",
             )
             # #endregion
-            raise ValueError(f"Mercado Pago preference failed: {resp.status_code} {resp.text}")
+            raise ValueError(
+                f"Mercado Pago preference failed: {resp.status_code} {resp.text}"
+            )
         data = resp.json()
         # Com token TEST- preferir sandbox_init_point se a API devolver; não trocar host (sandbox.mercadopago.com.br leva a 404/Argentina)
         is_test = (self._access_token or "").strip().upper().startswith("TEST-")
@@ -139,7 +151,9 @@ class MercadoPagoProvider:
             logger.warning(
                 "MP em modo TESTE: o comprador deve usar CONTA DE TESTE do MP (Painel > Usuários de teste). Conta real gera 'Uma das partes é de teste'.",
             )
-        return PaymentLinkResult(payment_url=init_point, external_id=str(pref_id) if pref_id else None)
+        return PaymentLinkResult(
+            payment_url=init_point, external_id=str(pref_id) if pref_id else None
+        )
 
     def create_subscription_plan(
         self,
@@ -153,10 +167,14 @@ class MercadoPagoProvider:
     ) -> SubscriptionPlanResult:
         """Create a preapproval_plan for Assinaturas. Returns plan_id and init_point (redirect URL)."""
         if not self._access_token:
-            raise ValueError("Mercado Pago not configured; set MP_ACCESS_TOKEN or use IntegrationConfig")
+            raise ValueError(
+                "Mercado Pago not configured; set MP_ACCESS_TOKEN or use IntegrationConfig"
+            )
         tok = (self._access_token or "").strip()
         prefix = (tok[:16] + "..." if len(tok) > 16 else tok[:16]) if tok else "vazio"
-        logger.info("MP Assinaturas preapproval_plan: token prefixo=%s len=%s", prefix, len(tok))
+        logger.info(
+            "MP Assinaturas preapproval_plan: token prefixo=%s len=%s", prefix, len(tok)
+        )
         if tok.upper().startswith("TEST-"):
             logger.warning(
                 "Assinaturas: credenciais de teste (TEST-) podem retornar 401; use APP_USR-... de produção.",
@@ -194,8 +212,18 @@ class MercadoPagoProvider:
                         probe = client.post(
                             f"{MP_API_BASE}/checkout/preferences",
                             json={
-                                "items": [{"title": "probe", "quantity": 1, "currency_id": "BRL", "unit_price": 0.01}],
-                                "back_urls": {"success": "https://x.com", "failure": "https://x.com"},
+                                "items": [
+                                    {
+                                        "title": "probe",
+                                        "quantity": 1,
+                                        "currency_id": "BRL",
+                                        "unit_price": 0.01,
+                                    }
+                                ],
+                                "back_urls": {
+                                    "success": "https://x.com",
+                                    "failure": "https://x.com",
+                                },
                             },
                             headers={
                                 "Authorization": f"Bearer {self._access_token}",
@@ -212,10 +240,10 @@ class MercadoPagoProvider:
                         err_detail += " Token rejeitado também no Checkout Pro; confira se o Access Token está correto e não expirado."
                 except Exception as e:
                     logger.warning("Probe Checkout Pro falhou: %s", e)
-                    err_detail += (
-                        " Confira: produto Assinaturas ativado na app; token APP_USR- de produção; Renovar credenciais após ativar Assinaturas."
-                    )
-            raise ValueError(f"Mercado Pago preapproval_plan failed: {resp.status_code} {err_detail}")
+                    err_detail += " Confira: produto Assinaturas ativado na app; token APP_USR- de produção; Renovar credenciais após ativar Assinaturas."
+            raise ValueError(
+                f"Mercado Pago preapproval_plan failed: {resp.status_code} {err_detail}"
+            )
         data = resp.json()
         plan_id = data.get("id") or ""
         # API de Assinaturas (preapproval_plan) só devolve init_point; não existe sandbox_init_point como no Checkout Pro.
@@ -270,14 +298,22 @@ class MercadoPagoProvider:
             if "data" in data and "id" in data["data"]:
                 preapproval_id = str(data["data"]["id"])
             if not preapproval_id:
-                return WebhookResult(processed=False, message="Missing preapproval id in webhook")
+                return WebhookResult(
+                    processed=False, message="Missing preapproval id in webhook"
+                )
             # Notificação de teste do painel MP (id 123456): responder 200 sem chamar a API
             if preapproval_id == "123456":
                 return WebhookResult(processed=True, message="123456")
             preapp = self.get_preapproval(preapproval_id)
             if not preapp:
-                return WebhookResult(processed=False, message="Failed to get preapproval")
-            plan_id = (preapp.get("preapproval_plan_id") or preapp.get("preapproval_plan", {}).get("id") or "")
+                return WebhookResult(
+                    processed=False, message="Failed to get preapproval"
+                )
+            plan_id = (
+                preapp.get("preapproval_plan_id")
+                or preapp.get("preapproval_plan", {}).get("id")
+                or ""
+            )
             if not plan_id:
                 return WebhookResult(processed=True, message=preapproval_id)
             return WebhookResult(
@@ -295,7 +331,9 @@ class MercadoPagoProvider:
         if "data" in data and "id" in data["data"]:
             payment_id = str(data["data"]["id"])
         if not payment_id:
-            return WebhookResult(processed=False, message="Missing payment id in webhook")
+            return WebhookResult(
+                processed=False, message="Missing payment id in webhook"
+            )
         # Notificação de teste do painel MP (id 123456): responder 200 sem chamar a API
         if payment_id == "123456":
             return WebhookResult(processed=True, message="123456")
@@ -305,7 +343,10 @@ class MercadoPagoProvider:
                 headers={"Authorization": f"Bearer {self._access_token}"},
             )
         if pay_resp.status_code != 200:
-            return WebhookResult(processed=False, message=f"Failed to get payment: {pay_resp.status_code}")
+            return WebhookResult(
+                processed=False,
+                message=f"Failed to get payment: {pay_resp.status_code}",
+            )
         pay_data = pay_resp.json()
         status = (pay_data.get("status") or "").lower()
         if status != "approved":
@@ -324,7 +365,9 @@ class MercadoPagoProvider:
 
     # ── Bricks: Customer & Card management ────────────────────────────
 
-    def create_or_get_customer(self, email: str, name: str | None = None) -> dict[str, Any]:
+    def create_or_get_customer(
+        self, email: str, name: str | None = None
+    ) -> dict[str, Any]:
         """Find or create an MP customer by e-mail. Returns the customer dict with 'id'."""
         if not self._access_token:
             raise ValueError("Mercado Pago not configured")
@@ -356,7 +399,9 @@ class MercadoPagoProvider:
                 },
             )
         if resp.status_code not in (200, 201):
-            raise ValueError(f"MP create customer failed: {resp.status_code} {resp.text}")
+            raise ValueError(
+                f"MP create customer failed: {resp.status_code} {resp.text}"
+            )
         return resp.json()
 
     def save_card(self, customer_id: str, card_token: str) -> dict[str, Any]:
@@ -409,7 +454,11 @@ class MercadoPagoProvider:
             payload["description"] = description
         if external_reference:
             payload["external_reference"] = external_reference
-        n_url = notification_url or os.environ.get("MP_NOTIFICATION_URL") or os.environ.get("MERCADOPAGO_NOTIFICATION_URL")
+        n_url = (
+            notification_url
+            or os.environ.get("MP_NOTIFICATION_URL")
+            or os.environ.get("MERCADOPAGO_NOTIFICATION_URL")
+        )
         if n_url:
             payload["notification_url"] = n_url
         with httpx.Client(timeout=15.0) as client:
@@ -476,9 +525,15 @@ class MercadoPagoProvider:
                 headers={"Authorization": f"Bearer {self._access_token}"},
             )
         if card_resp.status_code != 200:
-            raise ValueError(f"MP get card failed: {card_resp.status_code} {card_resp.text}")
+            raise ValueError(
+                f"MP get card failed: {card_resp.status_code} {card_resp.text}"
+            )
         card_data = card_resp.json()
-        payment_method_id = card_data.get("payment_method", {}).get("id") or card_data.get("payment_method_id") or ""
+        payment_method_id = (
+            card_data.get("payment_method", {}).get("id")
+            or card_data.get("payment_method_id")
+            or ""
+        )
         issuer_id = str(card_data.get("issuer", {}).get("id") or "")
         payload: dict[str, Any] = {
             "transaction_amount": round(amount, 2),
@@ -508,6 +563,7 @@ class MercadoPagoProvider:
                 },
             )
         if resp.status_code not in (200, 201):
-            raise ValueError(f"MP recurring payment failed: {resp.status_code} {resp.text}")
+            raise ValueError(
+                f"MP recurring payment failed: {resp.status_code} {resp.text}"
+            )
         return resp.json()
-

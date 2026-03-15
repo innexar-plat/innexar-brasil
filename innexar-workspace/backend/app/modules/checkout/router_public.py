@@ -1,12 +1,9 @@
 """Public checkout: start checkout (create customer/subscription/invoice, process payment)."""
+
 import logging
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
-
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, get_db
 from app.core.security import hash_password
@@ -14,13 +11,16 @@ from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
 from app.modules.billing.enums import InvoiceStatus, SubscriptionStatus
 from app.modules.billing.models import Invoice, PricePlan, Product, Subscription
+from app.modules.billing.overdue import reactivate_subscription_after_payment
 from app.modules.billing.post_payment import create_project_and_notify_after_payment
 from app.modules.billing.service import _get_payment_provider, create_payment_attempt
-from app.modules.billing.overdue import reactivate_subscription_after_payment
 from app.modules.checkout.schemas import CheckoutStartRequest, CheckoutStartResponse
 from app.modules.customers.service import send_portal_credentials_after_payment
 from app.modules.notifications.service import create_notification_and_maybe_send_email
 from app.providers.payments.mercadopago import MercadoPagoProvider
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/checkout", tags=["public-checkout"])
 ORG_ID = "innexar"
@@ -50,10 +50,12 @@ async def checkout_start(
     # ── Resolve product and price plan ────────────────────────────────
     pp = (
         await db.execute(
-            select(PricePlan).where(
+            select(PricePlan)
+            .where(
                 PricePlan.id == body.price_plan_id,
                 PricePlan.product_id == body.product_id,
-            ).limit(1)
+            )
+            .limit(1)
         )
     ).scalar_one_or_none()
     if not pp:
@@ -61,7 +63,9 @@ async def checkout_start(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product or price plan not found",
         )
-    product = (await db.execute(select(Product).where(Product.id == body.product_id).limit(1))).scalar_one_or_none()
+    product = (
+        await db.execute(select(Product).where(Product.id == body.product_id).limit(1))
+    ).scalar_one_or_none()
     if not product or not product.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -77,13 +81,23 @@ async def checkout_start(
             )
 
     # ── Find or create Customer + CustomerUser ────────────────────────
-    cu = (await db.execute(select(CustomerUser).where(CustomerUser.email == email).limit(1))).scalar_one_or_none()
+    cu = (
+        await db.execute(
+            select(CustomerUser).where(CustomerUser.email == email).limit(1)
+        )
+    ).scalar_one_or_none()
     existing_customer = cu is not None
     if cu:
         customer_id = cu.customer_id
-        cust = (await db.execute(select(Customer).where(Customer.id == customer_id).limit(1))).scalar_one_or_none()
+        cust = (
+            await db.execute(
+                select(Customer).where(Customer.id == customer_id).limit(1)
+            )
+        ).scalar_one_or_none()
     else:
-        cust = (await db.execute(select(Customer).where(Customer.email == email).limit(1))).scalar_one_or_none()
+        cust = (
+            await db.execute(select(Customer).where(Customer.email == email).limit(1))
+        ).scalar_one_or_none()
         if cust:
             customer_id = cust.id
             cu_new = CustomerUser(
@@ -95,7 +109,12 @@ async def checkout_start(
             db.add(cu_new)
             await db.flush()
         else:
-            cust = Customer(org_id=ORG_ID, name=body.customer_name or email, email=email, phone=body.customer_phone)
+            cust = Customer(
+                org_id=ORG_ID,
+                name=body.customer_name or email,
+                email=email,
+                phone=body.customer_phone,
+            )
             db.add(cust)
             await db.flush()
             customer_id = cust.id
@@ -118,7 +137,7 @@ async def checkout_start(
     db.add(sub)
     await db.flush()
 
-    due = datetime.now(timezone.utc) + timedelta(days=7)
+    due = datetime.now(UTC) + timedelta(days=7)
     line_items: list[dict] = [
         {"description": f"{product.name} - {pp.name}", "amount": float(pp.amount)}
     ]
@@ -126,7 +145,7 @@ async def checkout_start(
         line_items[0]["domain"] = body.domain.strip()
     if body.fidelity_12_months_accepted is True:
         line_items[0]["fidelity_12_months_accepted"] = True
-        line_items[0]["fidelity_accepted_at"] = datetime.now(timezone.utc).isoformat()
+        line_items[0]["fidelity_accepted_at"] = datetime.now(UTC).isoformat()
 
     inv = Invoice(
         customer_id=customer_id,
@@ -158,9 +177,13 @@ async def checkout_start(
             customer_phone=body.customer_phone,
         )
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
 
-    return CheckoutStartResponse(payment_url=res.payment_url, existing_customer=existing_customer)
+    return CheckoutStartResponse(
+        payment_url=res.payment_url, existing_customer=existing_customer
+    )
 
 
 def _is_recurring_interval(interval: str | None) -> bool:
@@ -195,13 +218,17 @@ async def _process_bricks_payment(
 
     # 1. Create or get MP Customer
     try:
-        mp_customer = provider.create_or_get_customer(email=payer_email, name=body.customer_name)
+        mp_customer = provider.create_or_get_customer(
+            email=payer_email, name=body.customer_name
+        )
         mp_customer_id = str(mp_customer.get("id", ""))
         if mp_customer_id and cust and not cust.mp_customer_id:
             cust.mp_customer_id = mp_customer_id
             await db.flush()
     except ValueError:
-        logger.warning("Failed to create/get MP customer for %s; proceeding with payment", email)
+        logger.warning(
+            "Failed to create/get MP customer for %s; proceeding with payment", email
+        )
         mp_customer_id = ""
 
     # 2. Process payment (card or pix)
@@ -217,7 +244,9 @@ async def _process_bricks_payment(
             external_reference=str(inv.id),
         )
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
 
     payment_status = (payment.get("status") or "").lower()
     payment_id = str(payment.get("id", ""))
@@ -230,22 +259,26 @@ async def _process_bricks_payment(
             if card_id:
                 logger.info("Saved card %s for MP customer %s", card_id, mp_customer_id)
         except Exception:
-            logger.warning("Failed to save card for MP customer %s", mp_customer_id, exc_info=True)
+            logger.warning(
+                "Failed to save card for MP customer %s", mp_customer_id, exc_info=True
+            )
 
     # 4. Update invoice and subscription based on payment status
     inv.external_id = payment_id
     if payment_status == "approved":
         inv.status = InvoiceStatus.PAID.value
-        inv.paid_at = datetime.now(timezone.utc)
+        inv.paid_at = datetime.now(UTC)
         sub.status = SubscriptionStatus.ACTIVE.value
-        sub.start_date = datetime.now(timezone.utc)
+        sub.start_date = datetime.now(UTC)
         if _is_recurring_interval(price_plan.interval):
             sub.next_due_date = sub.start_date + timedelta(days=30)
         await reactivate_subscription_after_payment(db, sub.id, org_id=ORG_ID)
         await db.flush()
         # Same post-payment actions as webhooks: project, credentials email, notification
         cu_r = await db.execute(
-            select(CustomerUser).where(CustomerUser.customer_id == inv.customer_id).limit(1)
+            select(CustomerUser)
+            .where(CustomerUser.customer_id == inv.customer_id)
+            .limit(1)
         )
         cu = cu_r.scalar_one_or_none()
         if cu:
@@ -259,7 +292,9 @@ async def _process_bricks_payment(
                 recipient_email=cu.email,
                 org_id=ORG_ID,
             )
-        background_tasks.add_task(send_portal_credentials_after_payment, inv.customer_id, ORG_ID)
+        background_tasks.add_task(
+            send_portal_credentials_after_payment, inv.customer_id, ORG_ID
+        )
         background_tasks.add_task(_run_create_project_after_payment, inv.id)
     elif payment_status in ("pending", "in_process"):
         inv.status = InvoiceStatus.PENDING.value
@@ -285,7 +320,9 @@ async def _process_bricks_payment(
             "cc_rejected_max_attempts": "Limite de tentativas atingido. Tente outro cartão.",
             "cc_rejected_other_reason": "Pagamento recusado. Tente outro cartão.",
         }
-        error_message = error_messages.get(status_detail, "Pagamento recusado. Verifique os dados e tente novamente.")
+        error_message = error_messages.get(
+            status_detail, "Pagamento recusado. Verifique os dados e tente novamente."
+        )
 
     # Extract Pix QR Code information if applicable
     qr_code_base64 = None

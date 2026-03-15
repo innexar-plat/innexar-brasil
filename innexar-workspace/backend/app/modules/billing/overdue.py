@@ -1,4 +1,5 @@
 """Overdue: suspend Hestia user and subscription when invoice not paid after grace period."""
+
 import logging
 from datetime import UTC, datetime, timedelta
 
@@ -7,7 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.hestia_settings import HestiaSettings
 from app.modules.billing.enums import InvoiceStatus, SubscriptionStatus
-from app.modules.billing.models import Invoice, Product, ProvisioningRecord, Subscription
+from app.modules.billing.models import (
+    Invoice,
+    Product,
+    ProvisioningRecord,
+    Subscription,
+)
 from app.providers.hestia.loader import get_hestia_client
 
 logger = logging.getLogger(__name__)
@@ -15,7 +21,9 @@ logger = logging.getLogger(__name__)
 
 async def process_overdue_invoices(db: AsyncSession, org_id: str = "innexar") -> int:
     """Find pending invoices past due_date + grace_period, suspend Hestia user and set subscription SUSPENDED. Returns count processed."""
-    settings_r = await db.execute(select(HestiaSettings).where(HestiaSettings.org_id == org_id).limit(1))
+    settings_r = await db.execute(
+        select(HestiaSettings).where(HestiaSettings.org_id == org_id).limit(1)
+    )
     hestia_settings = settings_r.scalar_one_or_none()
     if not hestia_settings or not hestia_settings.auto_suspend_enabled:
         return 0
@@ -28,7 +36,9 @@ async def process_overdue_invoices(db: AsyncSession, org_id: str = "innexar") ->
         .where(
             Invoice.status == InvoiceStatus.PENDING.value,
             Invoice.due_date < cutoff,
-            Subscription.status.in_([SubscriptionStatus.ACTIVE.value, SubscriptionStatus.OVERDUE.value]),
+            Subscription.status.in_(
+                [SubscriptionStatus.ACTIVE.value, SubscriptionStatus.OVERDUE.value]
+            ),
             (Product.provisioning_type or "").lower() == "hestia_hosting",
         )
     )
@@ -38,36 +48,50 @@ async def process_overdue_invoices(db: AsyncSession, org_id: str = "innexar") ->
     for inv, sub, _product in rows:
         sub.status = SubscriptionStatus.SUSPENDED.value
         rec_r = await db.execute(
-            select(ProvisioningRecord).where(
+            select(ProvisioningRecord)
+            .where(
                 ProvisioningRecord.subscription_id == sub.id,
                 ProvisioningRecord.provider == "hestia",
                 ProvisioningRecord.status == "provisioned",
-            ).limit(1)
+            )
+            .limit(1)
         )
         rec = rec_r.scalar_one_or_none()
         if rec and client:
             try:
                 client.suspend_user(rec.external_user)
-                logger.info("Suspended Hestia user %s for overdue invoice %s", rec.external_user, inv.id)
+                logger.info(
+                    "Suspended Hestia user %s for overdue invoice %s",
+                    rec.external_user,
+                    inv.id,
+                )
             except Exception as e:
-                logger.warning("Failed to suspend Hestia user %s: %s", rec.external_user, e)
+                logger.warning(
+                    "Failed to suspend Hestia user %s: %s", rec.external_user, e
+                )
         count += 1
     await db.flush()
     return count
 
 
-async def reactivate_subscription_after_payment(db: AsyncSession, subscription_id: int, org_id: str = "innexar") -> None:
+async def reactivate_subscription_after_payment(
+    db: AsyncSession, subscription_id: int, org_id: str = "innexar"
+) -> None:
     """If subscription was SUSPENDED, unsuspend Hestia user."""
-    sub_r = await db.execute(select(Subscription).where(Subscription.id == subscription_id).limit(1))
+    sub_r = await db.execute(
+        select(Subscription).where(Subscription.id == subscription_id).limit(1)
+    )
     sub = sub_r.scalar_one_or_none()
     if not sub or sub.status != SubscriptionStatus.SUSPENDED.value:
         return
     rec_r = await db.execute(
-        select(ProvisioningRecord).where(
+        select(ProvisioningRecord)
+        .where(
             ProvisioningRecord.subscription_id == subscription_id,
             ProvisioningRecord.provider == "hestia",
             ProvisioningRecord.status == "provisioned",
-        ).limit(1)
+        )
+        .limit(1)
     )
     rec = rec_r.scalar_one_or_none()
     if not rec:
@@ -77,7 +101,11 @@ async def reactivate_subscription_after_payment(db: AsyncSession, subscription_i
         return
     try:
         client.unsuspend_user(rec.external_user)
-        logger.info("Unsuspended Hestia user %s for subscription %s", rec.external_user, subscription_id)
+        logger.info(
+            "Unsuspended Hestia user %s for subscription %s",
+            rec.external_user,
+            subscription_id,
+        )
     except Exception as e:
         logger.warning("Failed to unsuspend Hestia user %s: %s", rec.external_user, e)
 
@@ -87,11 +115,13 @@ async def sync_subscription_status_to_hestia(
 ) -> None:
     """When subscription status is changed manually (PATCH), sync with Hestia: suspend or unsuspend user."""
     rec_r = await db.execute(
-        select(ProvisioningRecord).where(
+        select(ProvisioningRecord)
+        .where(
             ProvisioningRecord.subscription_id == subscription_id,
             ProvisioningRecord.provider == "hestia",
             ProvisioningRecord.status == "provisioned",
-        ).limit(1)
+        )
+        .limit(1)
     )
     rec = rec_r.scalar_one_or_none()
     if not rec:
@@ -99,7 +129,10 @@ async def sync_subscription_status_to_hestia(
     client = await get_hestia_client(db, org_id=org_id)
     if not client:
         return
-    if new_status in (SubscriptionStatus.SUSPENDED.value, SubscriptionStatus.CANCELED.value):
+    if new_status in (
+        SubscriptionStatus.SUSPENDED.value,
+        SubscriptionStatus.CANCELED.value,
+    ):
         try:
             client.suspend_user(rec.external_user)
             logger.info(
@@ -119,4 +152,6 @@ async def sync_subscription_status_to_hestia(
                 subscription_id,
             )
         except Exception as e:
-            logger.warning("Failed to unsuspend Hestia user %s: %s", rec.external_user, e)
+            logger.warning(
+                "Failed to unsuspend Hestia user %s: %s", rec.external_user, e
+            )

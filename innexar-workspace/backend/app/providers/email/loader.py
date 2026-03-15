@@ -1,4 +1,5 @@
 """Resolve email provider from IntegrationConfig or env."""
+
 import json
 import os
 from typing import TYPE_CHECKING

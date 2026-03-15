@@ -1,4 +1,5 @@
 """Support models: Ticket, TicketMessage."""
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -18,14 +19,18 @@ class Ticket(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     org_id: Mapped[str] = mapped_column(String(64), default="innexar", index=True)
-    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=False, index=True)
+    customer_id: Mapped[int] = mapped_column(
+        ForeignKey("customers.id"), nullable=False, index=True
+    )
     subject: Mapped[str] = mapped_column(String(512), nullable=False)
     status: Mapped[str] = mapped_column(String(64), default="open")
     category: Mapped[str] = mapped_column(String(64), default="suporte", index=True)
     project_id: Mapped[int | None] = mapped_column(
         ForeignKey("projects.id"), nullable=True, index=True
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow
     )
@@ -45,8 +50,12 @@ class TicketMessage(Base):
     ticket_id: Mapped[int] = mapped_column(
         ForeignKey("support_tickets.id"), nullable=False, index=True
     )
-    author_type: Mapped[str] = mapped_column(String(32), nullable=False)  # staff | customer
+    author_type: Mapped[str] = mapped_column(
+        String(32), nullable=False
+    )  # staff | customer
     body: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )
 
     ticket: Mapped["Ticket"] = relationship("Ticket", back_populates="messages")

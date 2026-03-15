@@ -1,4 +1,5 @@
 """Workspace support routes: tickets."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
@@ -17,7 +18,6 @@ from app.modules.support.schemas import (
     TicketMessageCreate,
     TicketMessageResponse,
     TicketResponse,
-    TicketUpdate,
 )
 
 router = APIRouter(prefix="/support", tags=["workspace-support"])
@@ -61,8 +61,16 @@ async def create_ticket(
     db.add(t)
     await db.flush()
     await db.refresh(t)
-    cust = (await db.execute(select(Customer).where(Customer.id == body.customer_id).limit(1))).scalar_one_or_none()
-    cu_r = await db.execute(select(CustomerUser).where(CustomerUser.customer_id == body.customer_id).limit(1))
+    cust = (
+        await db.execute(
+            select(Customer).where(Customer.id == body.customer_id).limit(1)
+        )
+    ).scalar_one_or_none()
+    cu_r = await db.execute(
+        select(CustomerUser)
+        .where(CustomerUser.customer_id == body.customer_id)
+        .limit(1)
+    )
     cu = cu_r.scalar_one_or_none()
     recipient = (cust.email if cust else None) or (cu.email if cu else None)
     if recipient:
@@ -93,7 +101,11 @@ async def get_ticket(
     return t
 
 
-@router.post("/tickets/{ticket_id}/messages", response_model=TicketMessageResponse, status_code=201)
+@router.post(
+    "/tickets/{ticket_id}/messages",
+    response_model=TicketMessageResponse,
+    status_code=201,
+)
 async def add_ticket_message(
     ticket_id: int,
     body: TicketMessageCreate,

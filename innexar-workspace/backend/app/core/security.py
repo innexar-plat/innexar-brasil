@@ -1,5 +1,6 @@
 """Password hashing and JWT creation (staff vs customer use different secrets)."""
-from datetime import datetime, timedelta, timezone
+
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from jose import JWTError, jwt
@@ -28,7 +29,7 @@ def create_token_staff(
     """Create JWT for staff (uses SECRET_KEY_STAFF)."""
     if expires_delta is None:
         expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    expire = datetime.now(timezone.utc) + expires_delta
+    expire = datetime.now(UTC) + expires_delta
     to_encode: dict[str, Any] = {
         "sub": str(subject),
         "exp": expire,
@@ -51,7 +52,7 @@ def create_token_customer(
     """Create JWT for customer (uses SECRET_KEY_CUSTOMER)."""
     if expires_delta is None:
         expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    expire = datetime.now(timezone.utc) + expires_delta
+    expire = datetime.now(UTC) + expires_delta
     to_encode: dict[str, Any] = {
         "sub": str(subject),
         "exp": expire,

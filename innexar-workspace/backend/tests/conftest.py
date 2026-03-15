@@ -1,4 +1,5 @@
 """Pytest fixtures: app, client, db_session, override get_db."""
+
 import asyncio
 import os
 import uuid
@@ -44,7 +45,9 @@ def _is_sqlite(url: str) -> bool:
 
 
 @pytest_asyncio.fixture
-async def engine_and_session() -> AsyncGenerator[tuple[Any, async_sessionmaker[AsyncSession]], None]:
+async def engine_and_session() -> (
+    AsyncGenerator[tuple[Any, async_sessionmaker[AsyncSession]], None]
+):
     """Create test engine and session factory."""
     kwargs: dict[str, Any] = {"echo": False}
     if _is_sqlite(TEST_DATABASE_URL):
@@ -83,6 +86,7 @@ async def override_get_db(
     db_session: AsyncSession,
 ) -> AsyncGenerator[AsyncSession, None]:
     """Override get_db to use test session."""
+
     async def _get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
@@ -110,9 +114,17 @@ def sync_client() -> Generator[TestClient, None, None]:
 
 # ---- Data fixtures for E2E ----
 RBAC_PERMISSION_SLUGS = [
-    "billing:read", "billing:write", "crm:read", "crm:write",
-    "projects:read", "projects:write", "support:read", "support:write",
-    "config:read", "config:write", "dashboard:read",
+    "billing:read",
+    "billing:write",
+    "crm:read",
+    "crm:write",
+    "projects:read",
+    "projects:write",
+    "support:read",
+    "support:write",
+    "config:read",
+    "config:write",
+    "dashboard:read",
 ]
 
 
@@ -131,7 +143,9 @@ async def staff_user(db_session: AsyncSession) -> User:
     await db_session.flush()
     perms: list[Permission] = []
     for slug in RBAC_PERMISSION_SLUGS:
-        r = await db_session.execute(select(Permission).where(Permission.slug == slug).limit(1))
+        r = await db_session.execute(
+            select(Permission).where(Permission.slug == slug).limit(1)
+        )
         p = r.scalar_one_or_none()
         if p is None:
             p = Permission(slug=slug, description=slug)
@@ -146,11 +160,17 @@ async def staff_user(db_session: AsyncSession) -> User:
         await db_session.flush()
         for p in perms:
             await db_session.execute(
-                insert(role_permissions).values(role_id=admin_role.id, permission_id=p.id)
+                insert(role_permissions).values(
+                    role_id=admin_role.id, permission_id=p.id
+                )
             )
-        await db_session.execute(insert(user_roles).values(user_id=user.id, role_id=admin_role.id))
+        await db_session.execute(
+            insert(user_roles).values(user_id=user.id, role_id=admin_role.id)
+        )
     else:
-        await db_session.execute(insert(user_roles).values(user_id=user.id, role_id=admin_role.id))
+        await db_session.execute(
+            insert(user_roles).values(user_id=user.id, role_id=admin_role.id)
+        )
     await db_session.commit()
     await db_session.refresh(user)
     return user
@@ -184,7 +204,9 @@ async def customer_and_user(db_session: AsyncSession) -> tuple[Customer, Custome
 @pytest_asyncio.fixture
 async def billing_enabled(db_session: AsyncSession) -> None:
     """Enable billing feature flag for tests that need it (idempotent)."""
-    r = await db_session.execute(select(FeatureFlag).where(FeatureFlag.key == "billing.enabled"))
+    r = await db_session.execute(
+        select(FeatureFlag).where(FeatureFlag.key == "billing.enabled")
+    )
     existing = r.scalar_one_or_none()
     if existing:
         if not existing.enabled:
@@ -197,7 +219,9 @@ async def billing_enabled(db_session: AsyncSession) -> None:
         await db_session.commit()
     except Exception:  # e.g. UniqueViolation if another test/session already created it
         await db_session.rollback()
-        r2 = await db_session.execute(select(FeatureFlag).where(FeatureFlag.key == "billing.enabled"))
+        r2 = await db_session.execute(
+            select(FeatureFlag).where(FeatureFlag.key == "billing.enabled")
+        )
         if r2.scalar_one_or_none() is None:
             raise
 

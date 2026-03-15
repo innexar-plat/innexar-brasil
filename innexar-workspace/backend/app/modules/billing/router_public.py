@@ -1,4 +1,5 @@
 """Public billing routes: webhooks Stripe / Mercado Pago."""
+
 import hmac
 import json
 import os
@@ -23,7 +24,9 @@ router = APIRouter(tags=["public-webhooks"])
 
 def _verify_mercadopago_webhook_signature(request: Request, body: bytes) -> bool:
     """Valida x-signature do MP (manifest + HMAC-SHA256). Se MP_WEBHOOK_SECRET não estiver definido, não valida."""
-    secret = os.environ.get("MP_WEBHOOK_SECRET") or os.environ.get("MERCADOPAGO_WEBHOOK_SECRET")
+    secret = os.environ.get("MP_WEBHOOK_SECRET") or os.environ.get(
+        "MERCADOPAGO_WEBHOOK_SECRET"
+    )
     if not secret:
         return True
     x_sig = request.headers.get("x-signature")
@@ -90,10 +93,16 @@ async def webhook_stripe(
     if not ok and msg != "already_processed":
         return Response(content=msg, status_code=400)
     if ok and paid_invoice_id:
-        inv = (await db.execute(select(Invoice).where(Invoice.id == paid_invoice_id).limit(1))).scalar_one_or_none()
+        inv = (
+            await db.execute(
+                select(Invoice).where(Invoice.id == paid_invoice_id).limit(1)
+            )
+        ).scalar_one_or_none()
         if inv:
             cu_r = await db.execute(
-                select(CustomerUser).where(CustomerUser.customer_id == inv.customer_id).limit(1)
+                select(CustomerUser)
+                .where(CustomerUser.customer_id == inv.customer_id)
+                .limit(1)
             )
             cu = cu_r.scalar_one_or_none()
             if cu:
@@ -107,9 +116,13 @@ async def webhook_stripe(
                     recipient_email=cu.email,
                     org_id="innexar",
                 )
-            background_tasks.add_task(send_portal_credentials_after_payment, inv.customer_id, "innexar")
+            background_tasks.add_task(
+                send_portal_credentials_after_payment, inv.customer_id, "innexar"
+            )
         background_tasks.add_task(_run_provisioning_after_payment, paid_invoice_id)
-        background_tasks.add_task(_create_project_and_notify_after_payment, paid_invoice_id)
+        background_tasks.add_task(
+            _create_project_and_notify_after_payment, paid_invoice_id
+        )
     return Response(content="ok", status_code=200)
 
 
@@ -131,17 +144,25 @@ async def webhook_mercadopago(
 ):
     body = await request.body()
     # Notificação de teste do painel (id 123456): aceitar sem assinatura para o botão "Testar este URL" passar
-    if not _is_mercadopago_test_notification(body) and not _verify_mercadopago_webhook_signature(request, body):
+    if not _is_mercadopago_test_notification(
+        body
+    ) and not _verify_mercadopago_webhook_signature(request, body):
         return Response(content="invalid signature", status_code=401)
     headers = dict(request.headers)
     ok, msg, paid_invoice_id = await process_webhook(db, "mercadopago", body, headers)
     if not ok:
         return Response(content=msg, status_code=400)
     if ok and paid_invoice_id:
-        inv = (await db.execute(select(Invoice).where(Invoice.id == paid_invoice_id).limit(1))).scalar_one_or_none()
+        inv = (
+            await db.execute(
+                select(Invoice).where(Invoice.id == paid_invoice_id).limit(1)
+            )
+        ).scalar_one_or_none()
         if inv:
             cu_r = await db.execute(
-                select(CustomerUser).where(CustomerUser.customer_id == inv.customer_id).limit(1)
+                select(CustomerUser)
+                .where(CustomerUser.customer_id == inv.customer_id)
+                .limit(1)
             )
             cu = cu_r.scalar_one_or_none()
             if cu:
@@ -155,7 +176,11 @@ async def webhook_mercadopago(
                     recipient_email=cu.email,
                     org_id="innexar",
                 )
-            background_tasks.add_task(send_portal_credentials_after_payment, inv.customer_id, "innexar")
+            background_tasks.add_task(
+                send_portal_credentials_after_payment, inv.customer_id, "innexar"
+            )
         background_tasks.add_task(_run_provisioning_after_payment, paid_invoice_id)
-        background_tasks.add_task(_create_project_and_notify_after_payment, paid_invoice_id)
+        background_tasks.add_task(
+            _create_project_and_notify_after_payment, paid_invoice_id
+        )
     return Response(content="ok", status_code=200)

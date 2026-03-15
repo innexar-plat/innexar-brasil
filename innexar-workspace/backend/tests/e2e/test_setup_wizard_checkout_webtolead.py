@@ -1,22 +1,26 @@
 """E2E: setup-wizard (with token), RBAC 403, checkout/start, web-to-lead."""
-import uuid
-import pytest
-from httpx import AsyncClient
-from sqlalchemy import insert, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
+import uuid
+
+import pytest
 from app.core.security import create_token_staff, hash_password
 from app.models.permission import Permission
 from app.models.role import Role, role_permissions, user_roles
 from app.models.user import User
 from app.modules.billing.models import PricePlan, Product
 from app.modules.crm.models import Contact
+from httpx import AsyncClient
+from sqlalchemy import insert, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
-async def test_setup_wizard_with_token(client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_setup_wizard_with_token(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """POST /api/workspace/system/setup-wizard with SEED_TOKEN returns summary."""
     from app.core import config
+
     token = "test-seed-token-123"
     monkeypatch.setattr(config.settings, "SEED_TOKEN", token)
     r = await client.post(
@@ -48,7 +52,11 @@ async def test_rbac_403_without_permission(
     db_session.add(user)
     await db_session.flush()
     # Create role "viewer" with only crm:read (no billing:read)
-    perm = (await db_session.execute(select(Permission).where(Permission.slug == "crm:read").limit(1))).scalar_one_or_none()
+    perm = (
+        await db_session.execute(
+            select(Permission).where(Permission.slug == "crm:read").limit(1)
+        )
+    ).scalar_one_or_none()
     if perm is None:
         perm = Permission(slug="crm:read", description="crm:read")
         db_session.add(perm)
@@ -56,8 +64,12 @@ async def test_rbac_403_without_permission(
     role = Role(org_id="innexar", name="Viewer", slug="viewer")
     db_session.add(role)
     await db_session.flush()
-    await db_session.execute(insert(role_permissions).values(role_id=role.id, permission_id=perm.id))
-    await db_session.execute(insert(user_roles).values(user_id=user.id, role_id=role.id))
+    await db_session.execute(
+        insert(role_permissions).values(role_id=role.id, permission_id=perm.id)
+    )
+    await db_session.execute(
+        insert(user_roles).values(user_id=user.id, role_id=role.id)
+    )
     await db_session.flush()
     staff_token = create_token_staff(user.id)
     r = await client.get(
@@ -74,7 +86,10 @@ async def test_public_checkout_returns_payment_url(
 ) -> None:
     """POST /api/public/checkout/start returns payment_url (flow until payment_url)."""
     from app.models.customer import Customer
-    cust = Customer(org_id="innexar", name="Checkout Customer", email="checkout@test.com")
+
+    cust = Customer(
+        org_id="innexar", name="Checkout Customer", email="checkout@test.com"
+    )
     db_session.add(cust)
     await db_session.flush()
     product = Product(org_id="innexar", name="Test Product", is_active=True)
@@ -131,7 +146,11 @@ async def test_web_to_lead_201_creates_contact(
     data = r.json()
     assert "id" in data
     contact_id = data["id"]
-    c = (await db_session.execute(select(Contact).where(Contact.id == contact_id).limit(1))).scalar_one_or_none()
+    c = (
+        await db_session.execute(
+            select(Contact).where(Contact.id == contact_id).limit(1)
+        )
+    ).scalar_one_or_none()
     assert c is not None
     assert c.name == "Lead One"
     assert c.email == "lead1@test.com"

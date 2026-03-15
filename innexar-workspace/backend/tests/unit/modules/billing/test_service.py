@@ -1,12 +1,10 @@
 """Unit tests for billing service (mocked provider)."""
+
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.customer import Customer
 from app.models.integration_config import IntegrationConfig
 from app.modules.billing.enums import InvoiceStatus
@@ -19,10 +17,14 @@ from app.modules.billing.service import (
 )
 from app.providers.payments.base import PaymentLinkResult, WebhookResult
 from app.providers.payments.mercadopago import MercadoPagoProvider
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
-async def test_create_payment_attempt_with_mock_provider(db_session: AsyncSession) -> None:
+async def test_create_payment_attempt_with_mock_provider(
+    db_session: AsyncSession,
+) -> None:
     """create_payment_attempt uses provider and persists PaymentAttempt and updates Invoice."""
     customer = Customer(org_id="test", name="C", email="c@test.com")
     db_session.add(customer)
@@ -30,16 +32,20 @@ async def test_create_payment_attempt_with_mock_provider(db_session: AsyncSessio
     inv = await create_manual_invoice(
         db_session,
         customer_id=customer.id,
-        due_date=datetime.now(timezone.utc),
+        due_date=datetime.now(UTC),
         total=100.0,
         currency="USD",
     )
     await db_session.flush()
-    mock_result = PaymentLinkResult(payment_url="https://checkout.mock/pay", external_id="ch_mock_1")
+    mock_result = PaymentLinkResult(
+        payment_url="https://checkout.mock/pay", external_id="ch_mock_1"
+    )
     mock_provider = MagicMock()
     mock_provider.create_payment_link.return_value = mock_result
 
-    with patch("app.modules.billing.service._get_payment_provider", return_value=mock_provider):
+    with patch(
+        "app.modules.billing.service._get_payment_provider", return_value=mock_provider
+    ):
         res = await create_payment_attempt(
             db_session,
             invoice_id=inv.id,
@@ -49,7 +55,9 @@ async def test_create_payment_attempt_with_mock_provider(db_session: AsyncSessio
         )
     assert res.payment_url == "https://checkout.mock/pay"
     mock_provider.create_payment_link.assert_called_once()
-    r = await db_session.execute(select(PaymentAttempt).where(PaymentAttempt.invoice_id == inv.id))
+    r = await db_session.execute(
+        select(PaymentAttempt).where(PaymentAttempt.invoice_id == inv.id)
+    )
     attempt = r.scalar_one_or_none()
     assert attempt is not None
     assert attempt.payment_url == "https://checkout.mock/pay"
@@ -67,7 +75,7 @@ async def test_process_webhook_idempotent(db_session: AsyncSession) -> None:
     inv = Invoice(
         customer_id=customer.id,
         status=InvoiceStatus.PENDING.value,
-        due_date=datetime.now(timezone.utc),
+        due_date=datetime.now(UTC),
         total=50.0,
         currency="USD",
     )
@@ -97,13 +105,17 @@ async def test_process_webhook_idempotent(db_session: AsyncSession) -> None:
         ok2, msg2, _ = await process_webhook(db_session, "stripe", body, headers)
     assert ok2 is True
     assert msg2 == "already_processed"
-    r = await db_session.execute(select(WebhookEvent).where(WebhookEvent.event_id == event_id))
+    r = await db_session.execute(
+        select(WebhookEvent).where(WebhookEvent.event_id == event_id)
+    )
     events = list(r.scalars().all())
     assert len(events) == 1
 
 
 @pytest.mark.asyncio
-async def test_process_webhook_mercadopago_marks_invoice_paid(db_session: AsyncSession) -> None:
+async def test_process_webhook_mercadopago_marks_invoice_paid(
+    db_session: AsyncSession,
+) -> None:
     """Processing Mercado Pago webhook with approved payment marks invoice PAID and is idempotent."""
     customer = Customer(org_id="test", name="C", email="c@test.com")
     db_session.add(customer)
@@ -111,7 +123,7 @@ async def test_process_webhook_mercadopago_marks_invoice_paid(db_session: AsyncS
     inv = Invoice(
         customer_id=customer.id,
         status=InvoiceStatus.PENDING.value,
-        due_date=datetime.now(timezone.utc),
+        due_date=datetime.now(UTC),
         total=50.0,
         currency="BRL",
     )
@@ -129,7 +141,9 @@ async def test_process_webhook_mercadopago_marks_invoice_paid(db_session: AsyncS
 
     with patch("app.modules.billing.service.MercadoPagoProvider") as mock_mp_class:
         mock_mp_class.return_value.handle_webhook.return_value = mock_result
-        ok1, msg1, paid_id = await process_webhook(db_session, "mercadopago", body, headers)
+        ok1, msg1, paid_id = await process_webhook(
+            db_session, "mercadopago", body, headers
+        )
     assert ok1 is True
     assert msg1 == "ok"
     assert paid_id == inv.id
@@ -161,7 +175,7 @@ async def test_get_payment_provider_prefers_mp_access_token_env(
             mode="test",
         )
     assert isinstance(provider, MercadoPagoProvider)
-    assert getattr(provider, "_access_token") == "env-token-mp"
+    assert provider._access_token == "env-token-mp"
 
 
 @pytest.mark.asyncio
@@ -185,18 +199,20 @@ async def test_get_payment_provider_fallback_to_integration_config_when_no_env(
     db_session.add(cfg)
     await db_session.commit()
 
-    with patch.dict(
-        os.environ,
-        {"MP_ACCESS_TOKEN": "", "MERCADOPAGO_ACCESS_TOKEN": ""},
-        clear=False,
+    with (
+        patch.dict(
+            os.environ,
+            {"MP_ACCESS_TOKEN": "", "MERCADOPAGO_ACCESS_TOKEN": ""},
+            clear=False,
+        ),
+        patch("app.modules.billing.service.decrypt_value", return_value="config-token"),
     ):
-        with patch("app.modules.billing.service.decrypt_value", return_value="config-token"):
-            provider = await _get_payment_provider(
-                db_session,
-                customer_id=customer.id,
-                org_id="innexar",
-                currency="BRL",
-                mode="test",
-            )
+        provider = await _get_payment_provider(
+            db_session,
+            customer_id=customer.id,
+            org_id="innexar",
+            currency="BRL",
+            mode="test",
+        )
     assert isinstance(provider, MercadoPagoProvider)
-    assert getattr(provider, "_access_token") == "config-token"
+    assert provider._access_token == "config-token"

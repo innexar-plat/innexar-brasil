@@ -1,16 +1,16 @@
 """Unit tests for portal billing router (pay_invoice: Bricks vs Checkout Pro, 401, 404)."""
-from datetime import datetime, timezone
+
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.security import create_token_customer
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
 from app.modules.billing.schemas import PayResponse
 from app.modules.billing.service import create_manual_invoice
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
@@ -25,7 +25,7 @@ async def test_pay_invoice_without_payment_method_id_calls_checkout_pro_not_bric
     inv = await create_manual_invoice(
         override_get_db,
         customer_id=customer.id,
-        due_date=datetime.now(timezone.utc),
+        due_date=datetime.now(UTC),
         total=100.0,
         currency="BRL",
     )
@@ -36,7 +36,9 @@ async def test_pay_invoice_without_payment_method_id_calls_checkout_pro_not_bric
         "app.modules.billing.router_portal.create_payment_attempt",
         new_callable=AsyncMock,
     ) as mock_create:
-        mock_create.return_value = PayResponse(payment_url="https://checkout.pro/pay", attempt_id=1)
+        mock_create.return_value = PayResponse(
+            payment_url="https://checkout.pro/pay", attempt_id=1
+        )
         with patch(
             "app.modules.billing.router_portal._pay_invoice_bricks",
             new_callable=AsyncMock,
@@ -64,7 +66,7 @@ async def test_pay_invoice_with_payment_method_id_calls_bricks_returns_200(
     inv = await create_manual_invoice(
         override_get_db,
         customer_id=customer.id,
-        due_date=datetime.now(timezone.utc),
+        due_date=datetime.now(UTC),
         total=50.0,
         currency="BRL",
     )
@@ -105,7 +107,7 @@ async def test_pay_invoice_other_customer_returns_404(
     inv = await create_manual_invoice(
         override_get_db,
         customer_id=customer.id,
-        due_date=datetime.now(timezone.utc),
+        due_date=datetime.now(UTC),
         total=50.0,
         currency="BRL",
     )
@@ -113,7 +115,9 @@ async def test_pay_invoice_other_customer_returns_404(
     # Invoice belongs to customer; authenticate as a different customer to get 404.
     from app.core.security import hash_password
 
-    other_customer = Customer(org_id="innexar", name="Other", email="other@test.innexar.com")
+    other_customer = Customer(
+        org_id="innexar", name="Other", email="other@test.innexar.com"
+    )
     override_get_db.add(other_customer)
     await override_get_db.flush()
     other_user = CustomerUser(
@@ -146,7 +150,7 @@ async def test_pay_invoice_without_token_returns_401(
     inv = await create_manual_invoice(
         override_get_db,
         customer_id=customer.id,
-        due_date=datetime.now(timezone.utc),
+        due_date=datetime.now(UTC),
         total=50.0,
         currency="BRL",
     )
@@ -170,7 +174,7 @@ async def test_pay_invoice_with_invalid_token_returns_401(
     inv = await create_manual_invoice(
         override_get_db,
         customer_id=customer.id,
-        due_date=datetime.now(timezone.utc),
+        due_date=datetime.now(UTC),
         total=50.0,
         currency="BRL",
     )

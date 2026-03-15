@@ -1,4 +1,5 @@
 """Hosting provider protocol (e.g. Hestia)."""
+
 from typing import Protocol
 
 

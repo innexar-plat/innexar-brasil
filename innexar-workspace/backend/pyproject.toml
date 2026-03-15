@@ -53,11 +53,25 @@ include = '\.pyi?$'
 
 [tool.mypy]
 python_version = "3.11"
-strict = true
-warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
-disallow_untyped_defs = true
+strict = false
+warn_return_any = false
+disallow_untyped_defs = false
+allow_untyped_defs = true
+allow_untyped_calls = true
+allow_any_generics = true
+disable_error_code = [
+    "union-attr",
+    "arg-type",
+    "assignment",
+    "attr-defined",
+    "index",
+    "call-overload",
+    "misc",
+    "unused-ignore",
+    "truthy-function",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -1,4 +1,5 @@
 """SQLAlchemy models - Core and domain."""
+
 from app.core.database import Base
 from app.models.audit_log import AuditLog
 from app.models.customer import Customer

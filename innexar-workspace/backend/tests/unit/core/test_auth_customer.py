@@ -1,14 +1,14 @@
 """Unit tests for customer auth (get_current_customer): valid, invalid, expired token."""
+
 from datetime import timedelta
 
 import pytest
-from fastapi.security import HTTPAuthorizationCredentials
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.auth_customer import get_current_customer
 from app.core.security import create_token_customer
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
+from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

@@ -1,11 +1,10 @@
 """Unit tests for Mercado Pago provider (mocked HTTP)."""
-import json
+
 from unittest.mock import MagicMock, patch
 
 import pytest
-
+from app.providers.payments.base import PaymentLinkResult
 from app.providers.payments.mercadopago import MercadoPagoProvider
-from app.providers.payments.base import PaymentLinkResult, WebhookResult
 
 
 def test_create_payment_link_raises_without_token() -> None:
@@ -13,6 +12,7 @@ def test_create_payment_link_raises_without_token() -> None:
         # Ensure no env token
         for k in ("MP_ACCESS_TOKEN", "MERCADOPAGO_ACCESS_TOKEN"):
             import os
+
             os.environ.pop(k, None)
         provider = MercadoPagoProvider(access_token=None)
     with pytest.raises(ValueError, match="Mercado Pago not configured"):
@@ -28,11 +28,16 @@ def test_create_payment_link_raises_without_token() -> None:
 def test_create_payment_link_returns_url_on_201() -> None:
     mock_resp = MagicMock()
     mock_resp.status_code = 201
-    mock_resp.json.return_value = {"id": "pref_123", "init_point": "https://mp.com/checkout/123"}
+    mock_resp.json.return_value = {
+        "id": "pref_123",
+        "init_point": "https://mp.com/checkout/123",
+    }
     mock_resp.text = ""
 
     with patch("app.providers.payments.mercadopago.httpx.Client") as mock_client_class:
-        mock_client_class.return_value.__enter__.return_value.post.return_value = mock_resp
+        mock_client_class.return_value.__enter__.return_value.post.return_value = (
+            mock_resp
+        )
         provider = MercadoPagoProvider(access_token="tk")
         result = provider.create_payment_link(
             invoice_id=42,
@@ -60,12 +65,17 @@ def test_create_payment_link_raises_on_non_201() -> None:
     mock_resp.text = "Bad request"
 
     with patch("app.providers.payments.mercadopago.httpx.Client") as mock_client_class:
-        mock_client_class.return_value.__enter__.return_value.post.return_value = mock_resp
+        mock_client_class.return_value.__enter__.return_value.post.return_value = (
+            mock_resp
+        )
         provider = MercadoPagoProvider(access_token="tk")
         with pytest.raises(ValueError, match="preference failed.*400"):
             provider.create_payment_link(
-                invoice_id=1, amount=10, currency="BRL",
-                success_url="https://a.com", cancel_url="https://a.com",
+                invoice_id=1,
+                amount=10,
+                currency="BRL",
+                success_url="https://a.com",
+                cancel_url="https://a.com",
             )
 
 
@@ -84,7 +94,9 @@ def test_handle_webhook_not_configured_returns_not_processed() -> None:
 def test_handle_webhook_ignores_non_payment_topic() -> None:
     with patch("app.providers.payments.mercadopago.httpx.Client"):
         provider = MercadoPagoProvider(access_token="tk")
-        result = provider.handle_webhook(b'{"type":"merchant_order","data":{"id":"1"}}', {})
+        result = provider.handle_webhook(
+            b'{"type":"merchant_order","data":{"id":"1"}}', {}
+        )
     assert result.processed is True
     assert "ignored" in (result.message or "").lower()
 
@@ -95,7 +107,9 @@ def test_handle_webhook_approved_returns_invoice_id() -> None:
     mock_get.json.return_value = {"status": "approved", "external_reference": "99"}
 
     with patch("app.providers.payments.mercadopago.httpx.Client") as mock_client_class:
-        mock_client_class.return_value.__enter__.return_value.get.return_value = mock_get
+        mock_client_class.return_value.__enter__.return_value.get.return_value = (
+            mock_get
+        )
         provider = MercadoPagoProvider(access_token="tk")
         result = provider.handle_webhook(
             b'{"type":"payment","data":{"id":"pay_123"}}',
@@ -112,7 +126,9 @@ def test_handle_webhook_pending_processed_without_invoice_id() -> None:
     mock_get.json.return_value = {"status": "pending", "external_reference": "99"}
 
     with patch("app.providers.payments.mercadopago.httpx.Client") as mock_client_class:
-        mock_client_class.return_value.__enter__.return_value.get.return_value = mock_get
+        mock_client_class.return_value.__enter__.return_value.get.return_value = (
+            mock_get
+        )
         provider = MercadoPagoProvider(access_token="tk")
         result = provider.handle_webhook(
             b'{"type":"payment","data":{"id":"pay_456"}}',
@@ -130,13 +146,17 @@ def test_handle_webhook_invalid_json_returns_not_processed() -> None:
     assert "Invalid JSON" in (result.message or "")
 
 
-def test_handle_webhook_subscription_preapproval_returns_plan_and_preapproval_ids() -> None:
+def test_handle_webhook_subscription_preapproval_returns_plan_and_preapproval_ids() -> (
+    None
+):
     mock_get = MagicMock()
     mock_get.status_code = 200
     mock_get.json.return_value = {"id": "preapp_456", "preapproval_plan_id": "plan_789"}
 
     with patch("app.providers.payments.mercadopago.httpx.Client") as mock_client_class:
-        mock_client_class.return_value.__enter__.return_value.get.return_value = mock_get
+        mock_client_class.return_value.__enter__.return_value.get.return_value = (
+            mock_get
+        )
         provider = MercadoPagoProvider(access_token="tk")
         result = provider.handle_webhook(
             b'{"type":"subscription_preapproval","data":{"id":"preapp_456"}}',
@@ -154,10 +174,14 @@ def test_handle_webhook_subscription_preapproval_returns_plan_and_preapproval_id
 def test_create_or_get_customer_finds_existing() -> None:
     mock_search = MagicMock()
     mock_search.status_code = 200
-    mock_search.json.return_value = {"results": [{"id": "cust_123", "email": "a@b.com"}]}
+    mock_search.json.return_value = {
+        "results": [{"id": "cust_123", "email": "a@b.com"}]
+    }
 
     with patch("app.providers.payments.mercadopago.httpx.Client") as mock_client_class:
-        mock_client_class.return_value.__enter__.return_value.get.return_value = mock_search
+        mock_client_class.return_value.__enter__.return_value.get.return_value = (
+            mock_search
+        )
         provider = MercadoPagoProvider(access_token="tk")
         result = provider.create_or_get_customer("a@b.com")
     assert result["id"] == "cust_123"
@@ -194,7 +218,9 @@ def test_save_card_success() -> None:
     mock_resp.json.return_value = {"id": "card_abc"}
 
     with patch("app.providers.payments.mercadopago.httpx.Client") as mock_client_class:
-        mock_client_class.return_value.__enter__.return_value.post.return_value = mock_resp
+        mock_client_class.return_value.__enter__.return_value.post.return_value = (
+            mock_resp
+        )
         provider = MercadoPagoProvider(access_token="tk")
         result = provider.save_card("cust_123", "tok_xyz")
     assert result["id"] == "card_abc"
@@ -206,7 +232,9 @@ def test_save_card_failure_returns_empty_dict() -> None:
     mock_resp.text = "bad"
 
     with patch("app.providers.payments.mercadopago.httpx.Client") as mock_client_class:
-        mock_client_class.return_value.__enter__.return_value.post.return_value = mock_resp
+        mock_client_class.return_value.__enter__.return_value.post.return_value = (
+            mock_resp
+        )
         provider = MercadoPagoProvider(access_token="tk")
         result = provider.save_card("cust_123", "tok_xyz")
     assert result == {}
@@ -221,7 +249,9 @@ def test_create_card_payment_success() -> None:
     mock_resp.json.return_value = {"id": 12345, "status": "approved"}
 
     with patch("app.providers.payments.mercadopago.httpx.Client") as mock_client_class:
-        mock_client_class.return_value.__enter__.return_value.post.return_value = mock_resp
+        mock_client_class.return_value.__enter__.return_value.post.return_value = (
+            mock_resp
+        )
         provider = MercadoPagoProvider(access_token="tk")
         result = provider.create_card_payment(
             token="tok_xxx",
@@ -242,7 +272,9 @@ def test_create_card_payment_failure_raises() -> None:
     mock_resp.text = "bad request"
 
     with patch("app.providers.payments.mercadopago.httpx.Client") as mock_client_class:
-        mock_client_class.return_value.__enter__.return_value.post.return_value = mock_resp
+        mock_client_class.return_value.__enter__.return_value.post.return_value = (
+            mock_resp
+        )
         provider = MercadoPagoProvider(access_token="tk")
         with pytest.raises(ValueError, match="MP payment failed"):
             provider.create_card_payment(
@@ -261,7 +293,9 @@ def test_create_payment_401_raises_value_error_with_access_token_message() -> No
     mock_resp.text = "Unauthorized"
 
     with patch("app.providers.payments.mercadopago.httpx.Client") as mock_client_class:
-        mock_client_class.return_value.__enter__.return_value.post.return_value = mock_resp
+        mock_client_class.return_value.__enter__.return_value.post.return_value = (
+            mock_resp
+        )
         provider = MercadoPagoProvider(access_token="invalid-or-public-key")
         with pytest.raises(ValueError) as exc_info:
             provider.create_payment(
@@ -306,4 +340,3 @@ def test_charge_saved_card_success() -> None:
             external_reference="55",
         )
     assert result["status"] == "approved"
-

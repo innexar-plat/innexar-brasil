@@ -1,4 +1,5 @@
 """Workspace dashboard: summary (counts and totals) and revenue series."""
+
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal
@@ -34,8 +35,16 @@ async def get_dashboard_summary(
 ) -> DashboardSummaryResponse:
     """Get dashboard summary: active customers, invoices, subscriptions, tickets, projects (counts and totals)."""
     # Active customers: at least 1 Subscription active or 1 Invoice paid
-    sub_ids = select(Subscription.customer_id).where(Subscription.status == SubscriptionStatus.ACTIVE.value).distinct()
-    inv_ids = select(Invoice.customer_id).where(Invoice.status == InvoiceStatus.PAID.value).distinct()
+    sub_ids = (
+        select(Subscription.customer_id)
+        .where(Subscription.status == SubscriptionStatus.ACTIVE.value)
+        .distinct()
+    )
+    inv_ids = (
+        select(Invoice.customer_id)
+        .where(Invoice.status == InvoiceStatus.PAID.value)
+        .distinct()
+    )
     union_ids = sub_ids.union(inv_ids).subquery()
     r = await db.execute(select(func.count()).select_from(union_ids))
     active_customers = r.scalar() or 0
@@ -43,35 +52,57 @@ async def get_dashboard_summary(
     # Invoices: total, pending, paid, total_paid_amount
     r = await db.execute(select(func.count()).select_from(Invoice))
     inv_total = r.scalar() or 0
-    r = await db.execute(select(func.count()).select_from(Invoice).where(Invoice.status == InvoiceStatus.PENDING.value))
+    r = await db.execute(
+        select(func.count())
+        .select_from(Invoice)
+        .where(Invoice.status == InvoiceStatus.PENDING.value)
+    )
     inv_pending = r.scalar() or 0
-    r = await db.execute(select(func.count()).select_from(Invoice).where(Invoice.status == InvoiceStatus.PAID.value))
+    r = await db.execute(
+        select(func.count())
+        .select_from(Invoice)
+        .where(Invoice.status == InvoiceStatus.PAID.value)
+    )
     inv_paid_count = r.scalar() or 0
     r = await db.execute(
-        select(func.coalesce(func.sum(Invoice.total), 0)).where(Invoice.status == InvoiceStatus.PAID.value)
+        select(func.coalesce(func.sum(Invoice.total), 0)).where(
+            Invoice.status == InvoiceStatus.PAID.value
+        )
     )
     total_paid_amount = float(r.scalar() or 0)
 
     # Subscriptions: active, canceled, total
     r = await db.execute(
-        select(func.count()).select_from(Subscription).where(Subscription.status == SubscriptionStatus.ACTIVE.value)
+        select(func.count())
+        .select_from(Subscription)
+        .where(Subscription.status == SubscriptionStatus.ACTIVE.value)
     )
     sub_active_count = r.scalar() or 0
     r = await db.execute(
-        select(func.count()).select_from(Subscription).where(Subscription.status == SubscriptionStatus.CANCELED.value)
+        select(func.count())
+        .select_from(Subscription)
+        .where(Subscription.status == SubscriptionStatus.CANCELED.value)
     )
     sub_canceled = r.scalar() or 0
     r = await db.execute(select(func.count()).select_from(Subscription))
     sub_total = r.scalar() or 0
 
     # Tickets: open, closed
-    r = await db.execute(select(func.count()).select_from(Ticket).where(Ticket.status == "open"))
+    r = await db.execute(
+        select(func.count()).select_from(Ticket).where(Ticket.status == "open")
+    )
     tickets_open = r.scalar() or 0
-    r = await db.execute(select(func.count()).select_from(Ticket).where(Ticket.status == "closed"))
+    r = await db.execute(
+        select(func.count()).select_from(Ticket).where(Ticket.status == "closed")
+    )
     tickets_closed = r.scalar() or 0
 
     # Projects: by status, total
-    r_proj = await db.execute(select(Project.status, func.count()).select_from(Project).group_by(Project.status))
+    r_proj = await db.execute(
+        select(Project.status, func.count())
+        .select_from(Project)
+        .group_by(Project.status)
+    )
     by_status: dict[str, int] = {str(row[0]): row[1] for row in r_proj.all()}
     r = await db.execute(select(func.count()).select_from(Project))
     projects_total = r.scalar() or 0
@@ -118,8 +149,12 @@ async def get_dashboard_revenue(
     period_type: Annotated[
         PeriodType, Query(description="day, week, or month")
     ] = "month",
-    start_date: datetime | None = Query(None, description="Start of range (UTC)"),  # noqa: B008
-    end_date: datetime | None = Query(None, description="End of range (UTC)"),  # noqa: B008
+    start_date: Annotated[
+        datetime | None, Query(description="Start of range (UTC)")
+    ] = None,
+    end_date: Annotated[
+        datetime | None, Query(description="End of range (UTC)")
+    ] = None,
 ) -> DashboardRevenueResponse:
     """Get revenue time series (paid invoices) for charts. Filter by period type and date range."""
     end = end_date or datetime.now(UTC)
@@ -140,5 +175,8 @@ async def get_dashboard_revenue(
         key = _period_key(paid_at, period_type)
         if key:
             by_period[key] += float(total)
-    series = [DashboardRevenuePoint(period=k, revenue=round(v, 2)) for k, v in sorted(by_period.items())]
+    series = [
+        DashboardRevenuePoint(period=k, revenue=round(v, 2))
+        for k, v in sorted(by_period.items())
+    ]
     return DashboardRevenueResponse(period_type=period_type, series=series)

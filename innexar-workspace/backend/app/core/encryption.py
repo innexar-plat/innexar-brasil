@@ -1,4 +1,5 @@
 """Fernet encryption for integration secrets."""
+
 import base64
 import logging
 

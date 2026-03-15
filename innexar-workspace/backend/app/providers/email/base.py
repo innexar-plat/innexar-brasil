@@ -1,4 +1,5 @@
 """Email provider protocol."""
+
 from typing import Protocol
 
 

@@ -1,18 +1,20 @@
 """Resolve Hestia client from IntegrationConfig."""
+
 import json
 from typing import TYPE_CHECKING
-
-from sqlalchemy import select
 
 from app.core.encryption import decrypt_value
 from app.models.integration_config import IntegrationConfig
 from app.providers.hestia.client import HestiaClient
+from sqlalchemy import select
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def get_hestia_client(db: "AsyncSession", org_id: str = "innexar") -> HestiaClient | None:
+async def get_hestia_client(
+    db: "AsyncSession", org_id: str = "innexar"
+) -> HestiaClient | None:
     """Load Hestia config from IntegrationConfig (tenant/workspace then global) and return client."""
     for scope in ("tenant", "workspace", "global"):
         q = select(IntegrationConfig).where(
@@ -43,7 +45,11 @@ async def get_hestia_client(db: "AsyncSession", org_id: str = "innexar") -> Hest
                     access_key = data.get("access_key") or ""
                     secret_key = data.get("secret_key") or ""
                     if base_url and access_key and secret_key:
-                        return HestiaClient(base_url=base_url, access_key=access_key, secret_key=secret_key)
+                        return HestiaClient(
+                            base_url=base_url,
+                            access_key=access_key,
+                            secret_key=secret_key,
+                        )
                 except (json.JSONDecodeError, TypeError):
                     pass
     return None

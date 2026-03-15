@@ -1,4 +1,5 @@
 """Payment provider protocol."""
+
 from dataclasses import dataclass
 from typing import Protocol
 

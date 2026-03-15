@@ -1,4 +1,5 @@
 """Workspace projects routes."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -95,4 +96,3 @@ async def update_project(
     await db.flush()
     await db.refresh(p)
     return p
-

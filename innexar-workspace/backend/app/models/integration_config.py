@@ -1,4 +1,5 @@
 """IntegrationConfig: provider config with encrypted value."""
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -18,7 +19,9 @@ class IntegrationConfig(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     org_id: Mapped[str] = mapped_column(String(64), default="innexar", index=True)
-    scope: Mapped[str] = mapped_column(String(32), nullable=False)  # global | tenant | customer
+    scope: Mapped[str] = mapped_column(
+        String(32), nullable=False
+    )  # global | tenant | customer
     customer_id: Mapped[int | None] = mapped_column(
         ForeignKey("customers.id"), nullable=True, index=True
     )

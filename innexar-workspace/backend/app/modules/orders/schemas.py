@@ -1,4 +1,5 @@
 """Orders and briefings API schemas."""
+
 from datetime import datetime
 from typing import Any
 

@@ -1,4 +1,5 @@
 """Cloudflare API v4 client: zones and DNS records (Bearer token)."""
+
 from __future__ import annotations
 
 import httpx
@@ -14,7 +15,10 @@ class CloudflareClient:
         self._account_id = account_id or ""
 
     def _headers(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self._api_token}", "Content-Type": "application/json"}
+        return {
+            "Authorization": f"Bearer {self._api_token}",
+            "Content-Type": "application/json",
+        }
 
     def _request(
         self,
@@ -26,12 +30,18 @@ class CloudflareClient:
     ) -> dict:
         url = f"{BASE_URL}{path}"
         with httpx.Client(timeout=30.0) as client:
-            resp = client.request(method, url, headers=self._headers(), params=params, json=json)
+            resp = client.request(
+                method, url, headers=self._headers(), params=params, json=json
+            )
         resp.raise_for_status()
         data = resp.json()
         if not data.get("success", True):
             errors = data.get("errors", [])
-            msg = "; ".join(e.get("message", str(e)) for e in errors) if errors else "Unknown error"
+            msg = (
+                "; ".join(e.get("message", str(e)) for e in errors)
+                if errors
+                else "Unknown error"
+            )
             raise RuntimeError(f"Cloudflare API error: {msg}")
         return data
 
@@ -50,7 +60,9 @@ class CloudflareClient:
                 return z
         return None
 
-    def create_zone(self, name: str, account_id: str | None = None, zone_type: str = "full") -> dict:
+    def create_zone(
+        self, name: str, account_id: str | None = None, zone_type: str = "full"
+    ) -> dict:
         """Create a zone. Requires account_id (from constructor or param). Returns zone dict with id, name, name_servers."""
         aid = account_id or self._account_id
         if not aid:

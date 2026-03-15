@@ -1,4 +1,5 @@
 """Workspace system routes: config/integrations, system/seed, setup-wizard."""
+
 import json
 import smtplib
 from datetime import UTC, datetime
@@ -56,7 +57,9 @@ def _config_to_response(c: IntegrationConfig) -> IntegrationConfigResponse:
 integrations_router = APIRouter(prefix="/config", tags=["workspace-config"])
 
 
-@integrations_router.get("/integrations", response_model=list[IntegrationConfigResponse])
+@integrations_router.get(
+    "/integrations", response_model=list[IntegrationConfigResponse]
+)
 async def list_integrations(
     db: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[User, Depends(RequirePermission("config:read"))],
@@ -66,7 +69,9 @@ async def list_integrations(
     return [_config_to_response(c) for c in r.scalars().all()]
 
 
-@integrations_router.post("/integrations", response_model=IntegrationConfigResponse, status_code=201)
+@integrations_router.post(
+    "/integrations", response_model=IntegrationConfigResponse, status_code=201
+)
 async def create_integration(
     body: IntegrationConfigCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -101,7 +106,9 @@ async def create_integration(
     return _config_to_response(c)
 
 
-@integrations_router.patch("/integrations/{config_id}", response_model=IntegrationConfigResponse)
+@integrations_router.patch(
+    "/integrations/{config_id}", response_model=IntegrationConfigResponse
+)
 async def update_integration(
     config_id: int,
     body: IntegrationConfigUpdate,
@@ -109,7 +116,9 @@ async def update_integration(
     current: Annotated[User, Depends(RequirePermission("config:write"))],
 ):
     """Update integration config (value encrypted if provided)."""
-    r = await db.execute(select(IntegrationConfig).where(IntegrationConfig.id == config_id))
+    r = await db.execute(
+        select(IntegrationConfig).where(IntegrationConfig.id == config_id)
+    )
     c = r.scalar_one_or_none()
     if not c:
         raise HTTPException(status_code=404, detail="Integration config not found")
@@ -147,7 +156,9 @@ async def test_integration(
     _: Annotated[User, Depends(RequirePermission("config:write"))],
 ) -> IntegrationTestResponse:
     """Test an integration config (Stripe, SMTP, Mercado Pago); updates last_tested_at on success. See docs/API.md."""
-    r = await db.execute(select(IntegrationConfig).where(IntegrationConfig.id == config_id))
+    r = await db.execute(
+        select(IntegrationConfig).where(IntegrationConfig.id == config_id)
+    )
     c = r.scalar_one_or_none()
     if not c:
         raise HTTPException(status_code=404, detail="Integration config not found")
@@ -156,11 +167,15 @@ async def test_integration(
     try:
         if provider == "stripe":
             if not plain:
-                return IntegrationTestResponse(ok=False, error="No secret key configured")
+                return IntegrationTestResponse(
+                    ok=False, error="No secret key configured"
+                )
             try:
                 import stripe as stripe_lib
             except ImportError:
-                return IntegrationTestResponse(ok=False, error="stripe package not installed")
+                return IntegrationTestResponse(
+                    ok=False, error="stripe package not installed"
+                )
             stripe_lib.api_key = plain
             stripe_lib.Balance.retrieve()
             c.last_tested_at = datetime.now(UTC)
@@ -168,11 +183,15 @@ async def test_integration(
             return IntegrationTestResponse(ok=True, message="Stripe connection OK")
         if provider == "smtp":
             if not plain:
-                return IntegrationTestResponse(ok=False, error="No SMTP config configured")
+                return IntegrationTestResponse(
+                    ok=False, error="No SMTP config configured"
+                )
             try:
                 data = json.loads(plain)
             except (json.JSONDecodeError, TypeError):
-                return IntegrationTestResponse(ok=False, error="Invalid SMTP config JSON")
+                return IntegrationTestResponse(
+                    ok=False, error="Invalid SMTP config JSON"
+                )
             host = data.get("host") or "localhost"
             port = int(data.get("port") or 587)
             user = data.get("user") or ""
@@ -185,21 +204,32 @@ async def test_integration(
             await db.flush()
             return IntegrationTestResponse(ok=True, message="SMTP connection OK")
         if provider == "mercadopago":
-            return IntegrationTestResponse(ok=False, error="Test not implemented for Mercado Pago")
+            return IntegrationTestResponse(
+                ok=False, error="Test not implemented for Mercado Pago"
+            )
         if provider == "hestia":
             if not plain:
-                return IntegrationTestResponse(ok=False, error="No Hestia config configured")
+                return IntegrationTestResponse(
+                    ok=False, error="No Hestia config configured"
+                )
             try:
                 data = json.loads(plain)
             except (json.JSONDecodeError, TypeError):
-                return IntegrationTestResponse(ok=False, error="Invalid Hestia config JSON")
+                return IntegrationTestResponse(
+                    ok=False, error="Invalid Hestia config JSON"
+                )
             from app.providers.hestia.client import HestiaClient
+
             base_url = (data.get("base_url") or "").rstrip("/")
             access_key = data.get("access_key") or ""
             secret_key = data.get("secret_key") or ""
             if not base_url or not access_key or not secret_key:
-                return IntegrationTestResponse(ok=False, error="Missing base_url, access_key or secret_key")
-            client = HestiaClient(base_url=base_url, access_key=access_key, secret_key=secret_key)
+                return IntegrationTestResponse(
+                    ok=False, error="Missing base_url, access_key or secret_key"
+                )
+            client = HestiaClient(
+                base_url=base_url, access_key=access_key, secret_key=secret_key
+            )
             client.request("v-list-users", returncode=True)
             c.last_tested_at = datetime.now(UTC)
             await db.flush()
@@ -207,7 +237,11 @@ async def test_integration(
         return IntegrationTestResponse(ok=False, error=f"Unknown provider: {provider}")
     except Exception as e:
         err_msg = str(e)
-        if provider == "hestia" and ("522" in err_msg or "timed out" in err_msg.lower() or "connection" in err_msg.lower()):
+        if provider == "hestia" and (
+            "522" in err_msg
+            or "timed out" in err_msg.lower()
+            or "connection" in err_msg.lower()
+        ):
             err_msg = (
                 f"{err_msg}. Verifique: URL acessível a partir do backend (porta típica 8083), "
                 "rede/firewall e Cloudflare (se aplicável). Veja docs/SETUP.md#erro-522-na-integração-hestia."
@@ -271,19 +305,29 @@ async def _run_bootstrap(db: AsyncSession) -> tuple[bool, list[str]]:
         db.add(admin_role)
         await db.flush()
         for p in perms:
-            await db.execute(insert(role_permissions).values(role_id=admin_role.id, permission_id=p.id))
-        await db.execute(insert(user_roles).values(user_id=admin_user.id, role_id=admin_role.id))
+            await db.execute(
+                insert(role_permissions).values(
+                    role_id=admin_role.id, permission_id=p.id
+                )
+            )
+        await db.execute(
+            insert(user_roles).values(user_id=admin_user.id, role_id=admin_role.id)
+        )
     else:
         r = await db.execute(
-            select(user_roles).where(
+            select(user_roles)
+            .where(
                 and_(
                     user_roles.c.user_id == admin_user.id,
                     user_roles.c.role_id == admin_role.id,
                 )
-            ).limit(1)
+            )
+            .limit(1)
         )
         if r.first() is None:
-            await db.execute(insert(user_roles).values(user_id=admin_user.id, role_id=admin_role.id))
+            await db.execute(
+                insert(user_roles).values(user_id=admin_user.id, role_id=admin_role.id)
+            )
     await db.flush()
 
     flags_created: list[str] = []
@@ -339,7 +383,9 @@ async def reset_admin_password(
     r = await db.execute(select(User).where(User.email == "admin@innexar.com").limit(1))
     admin_user = r.scalar_one_or_none()
     if admin_user is None:
-        raise HTTPException(status_code=404, detail="Admin user not found; run seed first")
+        raise HTTPException(
+            status_code=404, detail="Admin user not found; run seed first"
+        )
     admin_user.password_hash = hash_password(body.new_password)
     await db.commit()
 
@@ -368,20 +414,24 @@ async def setup_wizard(
 
     # Optional: create/update IntegrationConfig from body
     if body.smtp:
-        val = json.dumps({
-            "host": body.smtp.host,
-            "port": body.smtp.port,
-            "user": body.smtp.user,
-            "password": body.smtp.password,
-        })
+        val = json.dumps(
+            {
+                "host": body.smtp.host,
+                "port": body.smtp.port,
+                "user": body.smtp.user,
+                "password": body.smtp.password,
+            }
+        )
         enc = encrypt_value(val)
         if enc:
             r = await db.execute(
-                select(IntegrationConfig).where(
+                select(IntegrationConfig)
+                .where(
                     IntegrationConfig.provider == "smtp",
                     IntegrationConfig.key == "config",
                     IntegrationConfig.org_id == org_id,
-                ).limit(1)
+                )
+                .limit(1)
             )
             c = r.scalar_one_or_none()
             if c is None:
@@ -405,11 +455,13 @@ async def setup_wizard(
         enc = encrypt_value(body.stripe.secret_key)
         if enc:
             r = await db.execute(
-                select(IntegrationConfig).where(
+                select(IntegrationConfig)
+                .where(
                     IntegrationConfig.provider == "stripe",
                     IntegrationConfig.key == "secret_key",
                     IntegrationConfig.org_id == org_id,
-                ).limit(1)
+                )
+                .limit(1)
             )
             c = r.scalar_one_or_none()
             if c is None:
@@ -433,11 +485,13 @@ async def setup_wizard(
         enc = encrypt_value(body.mercadopago.access_token)
         if enc:
             r = await db.execute(
-                select(IntegrationConfig).where(
+                select(IntegrationConfig)
+                .where(
                     IntegrationConfig.provider == "mercadopago",
                     IntegrationConfig.key == "access_token",
                     IntegrationConfig.org_id == org_id,
-                ).limit(1)
+                )
+                .limit(1)
             )
             c = r.scalar_one_or_none()
             if c is None:
@@ -459,7 +513,9 @@ async def setup_wizard(
 
     if body.flags and body.flags.flags:
         for key, enabled in body.flags.flags.items():
-            r = await db.execute(select(FeatureFlag).where(FeatureFlag.key == key).limit(1))
+            r = await db.execute(
+                select(FeatureFlag).where(FeatureFlag.key == key).limit(1)
+            )
             flag = r.scalar_one_or_none()
             if flag is None:
                 db.add(FeatureFlag(key=key, enabled=enabled))
@@ -472,15 +528,18 @@ async def setup_wizard(
     if body.test_connection:
         test_results = {}
         r = await db.execute(
-            select(IntegrationConfig).where(
+            select(IntegrationConfig)
+            .where(
                 IntegrationConfig.provider == "stripe",
                 IntegrationConfig.org_id == org_id,
-            ).limit(1)
+            )
+            .limit(1)
         )
         stripe_cfg = r.scalar_one_or_none()
         if stripe_cfg and stripe_cfg.value_encrypted:
             try:
                 import stripe as stripe_lib
+
                 secret = decrypt_value(stripe_cfg.value_encrypted)
                 if secret:
                     stripe_lib.api_key = secret
@@ -505,7 +564,9 @@ async def setup_wizard(
 
 
 # ---------- Config / Hestia (dedicated area) ----------
-hestia_config_router = APIRouter(prefix="/config/hestia", tags=["workspace-config-hestia"])
+hestia_config_router = APIRouter(
+    prefix="/config/hestia", tags=["workspace-config-hestia"]
+)
 
 
 @hestia_config_router.get("/settings", response_model=HestiaSettingsResponse)
@@ -515,7 +576,9 @@ async def get_hestia_settings(
 ) -> HestiaSettingsResponse:
     """Get Hestia provisioning settings (grace period, default package, auto-suspend). Creates default if missing."""
     org_id = current.org_id or "innexar"
-    r = await db.execute(select(HestiaSettings).where(HestiaSettings.org_id == org_id).limit(1))
+    r = await db.execute(
+        select(HestiaSettings).where(HestiaSettings.org_id == org_id).limit(1)
+    )
     row = r.scalar_one_or_none()
     if not row:
         row = HestiaSettings(org_id=org_id)
@@ -536,7 +599,9 @@ async def update_hestia_settings(
 ) -> HestiaSettingsResponse:
     """Update Hestia provisioning settings."""
     org_id = current.org_id or "innexar"
-    r = await db.execute(select(HestiaSettings).where(HestiaSettings.org_id == org_id).limit(1))
+    r = await db.execute(
+        select(HestiaSettings).where(HestiaSettings.org_id == org_id).limit(1)
+    )
     row = r.scalar_one_or_none()
     if not row:
         row = HestiaSettings(org_id=org_id)

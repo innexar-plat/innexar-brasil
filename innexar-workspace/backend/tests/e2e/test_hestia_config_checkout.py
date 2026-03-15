@@ -1,14 +1,15 @@
 """E2E: Hestia config GET/PUT, process-overdue, checkout domain validation for hosting."""
-import pytest
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
+import pytest
 from app.core.security import create_token_staff
 from app.models.user import User
 from app.modules.billing.models import PricePlan, Product
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 try:
     from app.core.security import hash_password
+
     hash_password("x")
     _BCRYPT_WORKS = True
 except Exception:
@@ -83,6 +84,7 @@ async def test_checkout_hestia_hosting_requires_domain(
 ) -> None:
     """POST /api/public/checkout/start with hestia_hosting product and no domain returns 400."""
     from app.models.customer import Customer
+
     cust = Customer(org_id="innexar", name="Host", email="host@test.com")
     db_session.add(cust)
     await db_session.flush()
@@ -119,13 +121,17 @@ async def test_checkout_hestia_hosting_requires_domain(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(not _BCRYPT_WORKS, reason="bcrypt/passlib incompatible (checkout creates user with hash)")
+@pytest.mark.skipif(
+    not _BCRYPT_WORKS,
+    reason="bcrypt/passlib incompatible (checkout creates user with hash)",
+)
 async def test_checkout_hestia_hosting_with_domain_returns_payment_url(
     client: AsyncClient,
     db_session: AsyncSession,
 ) -> None:
     """POST /api/public/checkout/start with hestia_hosting and domain returns 201 and payment_url (or 400 if no provider)."""
     from app.models.customer import Customer
+
     cust = Customer(org_id="innexar", name="Host2", email="host2@test.com")
     db_session.add(cust)
     await db_session.flush()

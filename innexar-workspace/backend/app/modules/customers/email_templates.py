@@ -25,7 +25,9 @@ def portal_credentials_email(
         "Recomendamos alterar a senha após o primeiro acesso.\n\n"
     )
     if after_payment and briefing_url:
-        body_plain += f"Próximo passo: preencha os dados do seu site em {briefing_url}\n\n"
+        body_plain += (
+            f"Próximo passo: preencha os dados do seu site em {briefing_url}\n\n"
+        )
     body_plain += "— Equipe Innexar"
     body_html = _portal_credentials_html(
         login_url=login_url,
@@ -84,7 +86,8 @@ def _portal_credentials_html(
     )
     header = _email_header_html(EMAIL_LOGO_URL)
     footer = _email_footer_html()
-    return f"""<!DOCTYPE html>
+    return (
+        f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -117,16 +120,22 @@ def _portal_credentials_html(
               <p style="margin: 28px 0 0;">
                 <a href="{login_url}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px;">Acessar portal</a>
               </p>
-              """ + (
-                f'<p style="margin: 24px 0 0; font-size: 14px; color: #475569;">Próximo passo: <a href="{briefing_url}" style="color: #2563eb;">preencha os dados do seu site</a> (nome, serviços, fotos) para começarmos a construção.</p>'
-                if briefing_url else ""
-              ) + """
+              """
+        + (
+            f'<p style="margin: 24px 0 0; font-size: 14px; color: #475569;">Próximo passo: <a href="{briefing_url}" style="color: #2563eb;">preencha os dados do seu site</a> (nome, serviços, fotos) para começarmos a construção.</p>'
+            if briefing_url
+            else ""
+        )
+        + """
             </td>
           </tr>
-          """ + footer + """
+          """
+        + footer
+        + """
         </table>
       </td>
     </tr>
   </table>
 </body>
 </html>"""
+    )

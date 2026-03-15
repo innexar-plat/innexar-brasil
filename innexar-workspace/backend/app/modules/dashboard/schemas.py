@@ -1,4 +1,5 @@
 """Dashboard workspace schemas."""
+
 from pydantic import BaseModel
 
 

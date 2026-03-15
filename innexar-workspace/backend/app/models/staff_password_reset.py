@@ -1,4 +1,5 @@
 """Staff (workspace) password reset token. One-time use, expires after 24h."""
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, String
@@ -16,8 +17,12 @@ class StaffPasswordResetToken(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    token: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    token: Mapped[str] = mapped_column(
+        String(255), nullable=False, unique=True, index=True
+    )
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow
     )

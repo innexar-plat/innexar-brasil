@@ -1,4 +1,5 @@
 """SMTP email provider (config from env or constructor)."""
+
 import os
 import smtplib
 from email.mime.multipart import MIMEMultipart

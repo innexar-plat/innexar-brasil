@@ -1,21 +1,20 @@
 """Integration tests: billing models and service (Product, PricePlan, Subscription, Invoice, PaymentAttempt)."""
-from datetime import datetime, timezone
+
+from datetime import UTC, datetime
 
 import pytest
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.customer import Customer
 from app.modules.billing.enums import InvoiceStatus, SubscriptionStatus
 from app.modules.billing.models import (
-    Invoice,
     PaymentAttempt,
     PricePlan,
     Product,
     Subscription,
     WebhookEvent,
 )
-from app.modules.billing.service import create_manual_invoice, process_webhook
+from app.modules.billing.service import create_manual_invoice
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
@@ -58,7 +57,7 @@ async def test_billing_flow_create_entities(db_session: AsyncSession) -> None:
     inv = await create_manual_invoice(
         db_session,
         customer_id=customer.id,
-        due_date=datetime.now(timezone.utc),
+        due_date=datetime.now(UTC),
         total=99.99,
         currency="BRL",
         line_items=[{"description": "Pro Monthly", "amount": 99.99}],
@@ -82,7 +81,9 @@ async def test_billing_flow_create_entities(db_session: AsyncSession) -> None:
     db_session.add(attempt)
     await db_session.flush()
 
-    r = await db_session.execute(select(PaymentAttempt).where(PaymentAttempt.invoice_id == inv.id))
+    r = await db_session.execute(
+        select(PaymentAttempt).where(PaymentAttempt.invoice_id == inv.id)
+    )
     found = r.scalar_one_or_none()
     assert found is not None
     assert found.provider == "stripe"
@@ -114,6 +115,8 @@ async def test_webhook_event_idempotency(db_session: AsyncSession) -> None:
     db_session.add(ev1)
     await db_session.flush()
     r = await db_session.execute(
-        select(WebhookEvent).where(WebhookEvent.provider == "stripe", WebhookEvent.event_id == "ev_1")
+        select(WebhookEvent).where(
+            WebhookEvent.provider == "stripe", WebhookEvent.event_id == "ev_1"
+        )
     )
     assert r.scalar_one_or_none() is not None

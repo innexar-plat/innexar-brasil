@@ -1,5 +1,5 @@
 """Portal API: customer-only routes."""
-from datetime import datetime
+
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,9 +13,8 @@ from app.core.feature_flags import get_flag
 from app.core.security import hash_password, verify_password
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
+from app.models.notification import Notification
 from app.models.project_request import ProjectRequest
-from app.modules.projects.models import Project
-from app.schemas.auth import ChangePasswordRequest, CustomerMeResponse
 from app.modules.billing.enums import InvoiceStatus, SubscriptionStatus
 from app.modules.billing.models import (
     Invoice,
@@ -24,9 +23,10 @@ from app.modules.billing.models import (
     ProvisioningRecord,
     Subscription,
 )
-from app.modules.support.models import Ticket, TicketMessage
-from app.models.notification import Notification
 from app.modules.files.models import ProjectFile
+from app.modules.projects.models import Project
+from app.modules.support.models import Ticket, TicketMessage
+from app.schemas.auth import ChangePasswordRequest, CustomerMeResponse
 
 router = APIRouter()
 
@@ -90,7 +90,10 @@ async def portal_new_project(
     db.add(req)
     await db.flush()
     await db.refresh(req)
-    return {"id": req.id, "message": "Solicitação enviada. Nossa equipe entrará em contato."}
+    return {
+        "id": req.id,
+        "message": "Solicitação enviada. Nossa equipe entrará em contato.",
+    }
 
 
 @router.post("/site-briefing", status_code=201)
@@ -133,7 +136,9 @@ async def portal_site_briefing(
         )
         .where(
             ~Project.id.in_(
-                select(ProjectRequest.project_id).where(ProjectRequest.project_id.isnot(None))
+                select(ProjectRequest.project_id).where(
+                    ProjectRequest.project_id.isnot(None)
+                )
             )
         )
         .order_by(Project.id.desc())
@@ -228,9 +233,7 @@ async def get_my_profile(
     current: Annotated[CustomerUser, Depends(get_current_customer)],
 ) -> ProfileRead:
     """Portal: get current customer profile (name, email, phone, address)."""
-    r = await db.execute(
-        select(Customer).where(Customer.id == current.customer_id)
-    )
+    r = await db.execute(select(Customer).where(Customer.id == current.customer_id))
     cust = r.scalar_one_or_none()
     if not cust:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -249,9 +252,7 @@ async def update_my_profile(
     current: Annotated[CustomerUser, Depends(get_current_customer)],
 ) -> ProfileRead:
     """Portal: update current customer profile (name, phone, address; email read-only)."""
-    r = await db.execute(
-        select(Customer).where(Customer.id == current.customer_id)
-    )
+    r = await db.execute(select(Customer).where(Customer.id == current.customer_id))
     cust = r.scalar_one_or_none()
     if not cust:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -278,7 +279,8 @@ async def customer_me_features(
 ) -> dict[str, bool]:
     """Portal: feature flags for menu visibility (invoices, tickets, projects)."""
     return {
-        "invoices": await get_flag(db, "billing.enabled") or await get_flag(db, "portal.invoices.enabled"),
+        "invoices": await get_flag(db, "billing.enabled")
+        or await get_flag(db, "portal.invoices.enabled"),
         "tickets": await get_flag(db, "portal.tickets.enabled"),
         "projects": await get_flag(db, "portal.projects.enabled"),
     }
@@ -298,7 +300,9 @@ async def get_project_aguardando_briefing(
         )
         .where(
             ~Project.id.in_(
-                select(ProjectRequest.project_id).where(ProjectRequest.project_id.isnot(None))
+                select(ProjectRequest.project_id).where(
+                    ProjectRequest.project_id.isnot(None)
+                )
             )
         )
         .order_by(Project.id.desc())
@@ -373,7 +377,11 @@ async def customer_dashboard(
             "product_name": product.name,
             "price_plan_name": price_plan.name,
             "since": sub.start_date.isoformat() if sub.start_date else None,
-            "next_due_date": sub.next_due_date.isoformat() if getattr(sub, "next_due_date", None) else None,
+            "next_due_date": (
+                sub.next_due_date.isoformat()
+                if getattr(sub, "next_due_date", None)
+                else None
+            ),
         }
         inv_r = await db.execute(
             select(Invoice)
@@ -426,21 +434,29 @@ async def customer_dashboard(
             invoice = {
                 "id": inv_standalone.id,
                 "status": inv_standalone.status,
-                "due_date": inv_standalone.due_date.isoformat() if inv_standalone.due_date else None,
+                "due_date": (
+                    inv_standalone.due_date.isoformat()
+                    if inv_standalone.due_date
+                    else None
+                ),
                 "total": float(inv_standalone.total),
                 "currency": inv_standalone.currency,
             }
             can_pay_invoice = inv_standalone.status == InvoiceStatus.PENDING.value
 
     tickets_r = await db.execute(
-        select(func.count()).select_from(Ticket).where(
+        select(func.count())
+        .select_from(Ticket)
+        .where(
             Ticket.customer_id == customer_id,
             Ticket.status == "open",
         )
     )
     tickets_open_count = tickets_r.scalar() or 0
     unread_r = await db.execute(
-        select(func.count()).select_from(Notification).where(
+        select(func.count())
+        .select_from(Notification)
+        .where(
             Notification.customer_user_id == current.id,
             Notification.read_at.is_(None),
         )
@@ -458,7 +474,9 @@ async def customer_dashboard(
     projects_summary: list[dict[str, Any]] = []
     for p in projects_rows:
         files_count_r = await db.execute(
-            select(func.count()).select_from(ProjectFile).where(ProjectFile.project_id == p.id)
+            select(func.count())
+            .select_from(ProjectFile)
+            .where(ProjectFile.project_id == p.id)
         )
         files_count = files_count_r.scalar() or 0
         item = {
@@ -486,15 +504,17 @@ async def customer_dashboard(
     )
     for (product,) in subs_products_r.all():
         prov_type = (product.provisioning_type or "").strip() or None
-        products_summary.append({
-            "product_name": product.name,
-            "provisioning_type": prov_type,
-        })
+        products_summary.append(
+            {
+                "product_name": product.name,
+                "provisioning_type": prov_type,
+            }
+        )
         if (prov_type or "").lower() == "site_delivery":
             has_site_delivery_product = True
     show_briefing = has_site_delivery_product and len(projects_aguardando_briefing) > 0
     show_panel = panel is not None
-    has_hestia_hosting = any(
+    any(
         (p.get("provisioning_type") or "").lower() == "hestia_hosting"
         for p in products_summary
     )

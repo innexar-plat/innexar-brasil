@@ -1,4 +1,5 @@
 """Pydantic schemas for Hestia workspace API."""
+
 from pydantic import BaseModel, Field
 
 
@@ -26,6 +27,6 @@ class HestiaOverviewResponse(BaseModel):
 
     connected: bool = Field(..., description="Whether Hestia is reachable")
     total_users: int = Field(default=0, description="Number of users")
-    error: str | None = Field(default=None, description="Error message if not connected")
-
-
+    error: str | None = Field(
+        default=None, description="Error message if not connected"
+    )

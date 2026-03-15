@@ -1,6 +1,6 @@
 """Billing Pydantic schemas."""
+
 from datetime import datetime
-from decimal import Decimal
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
@@ -12,7 +12,9 @@ class ProductBase(BaseModel):
     description: str | None = None
     is_active: bool = True
     provisioning_type: str | None = None  # e.g. "hestia_hosting"
-    hestia_package: str | None = None  # Hestia package name when provisioning_type is hestia_hosting
+    hestia_package: str | None = (
+        None  # Hestia package name when provisioning_type is hestia_hosting
+    )
 
 
 class ProductCreate(ProductBase):
@@ -62,6 +64,7 @@ class PricePlanResponse(PricePlanBase):
 
 class ProductWithPlansResponse(ProductResponse):
     """Product with price plans (preço e período)."""
+
     price_plans: list[PricePlanResponse] = []
 
 

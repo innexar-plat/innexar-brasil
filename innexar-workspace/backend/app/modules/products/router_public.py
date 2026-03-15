@@ -1,4 +1,5 @@
 """Public products API: list site plans for the landing page and catalog (monthly + one-time)."""
+
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Query
@@ -77,7 +78,9 @@ async def list_products_catalog(
     db: Annotated[AsyncSession, Depends(get_db)],
     interval: Annotated[
         Literal["all", "month", "one_time"],
-        Query(description="Filter by plan interval: all, month (mensal), one_time (pagamento único)"),
+        Query(
+            description="Filter by plan interval: all, month (mensal), one_time (pagamento único)"
+        ),
     ] = "all",
 ) -> list[ProductCatalogOut]:
     """Return active products with their price plans. Use interval=one_time to list only pagamento único options."""
@@ -99,7 +102,9 @@ async def list_products_catalog(
                 currency=pp.currency or "BRL",
             )
             for pp in p.price_plans
-            if interval == "all" or (interval == "month" and pp.interval == "month") or (interval == "one_time" and pp.interval == "one_time")
+            if interval == "all"
+            or (interval == "month" and pp.interval == "month")
+            or (interval == "one_time" and pp.interval == "one_time")
         ]
         if not plans:
             continue

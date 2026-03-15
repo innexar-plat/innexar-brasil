@@ -1,4 +1,5 @@
 """Workspace orders and briefings: list orders (paid site invoices) and briefings (project requests)."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -43,7 +44,8 @@ async def list_orders(
         .join(Product, Subscription.product_id == Product.id)
         .where(
             Invoice.status == InvoiceStatus.PAID.value,
-            func.lower(func.coalesce(Product.provisioning_type, "")) == SITE_DELIVERY_TYPE,
+            func.lower(func.coalesce(Product.provisioning_type, ""))
+            == SITE_DELIVERY_TYPE,
         )
         .order_by(Invoice.paid_at.desc().nullslast(), Invoice.id.desc())
     )
@@ -121,13 +123,16 @@ async def get_briefing(
 ) -> BriefingDetail:
     """Get full briefing (project request) by id, including meta."""
     r = await db.execute(
-        select(ProjectRequest, Customer.name.label("customer_name")).join(
-            Customer, ProjectRequest.customer_id == Customer.id
-        ).where(ProjectRequest.id == briefing_id).limit(1)
+        select(ProjectRequest, Customer.name.label("customer_name"))
+        .join(Customer, ProjectRequest.customer_id == Customer.id)
+        .where(ProjectRequest.id == briefing_id)
+        .limit(1)
     )
     row = r.one_or_none()
     if not row:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Briefing not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Briefing not found"
+        )
     pr, customer_name = row
     return BriefingDetail(
         id=pr.id,
@@ -179,15 +184,20 @@ async def download_briefing(
 ) -> Response:
     """Download briefing as plain text file."""
     r = await db.execute(
-        select(ProjectRequest, Customer.name.label("customer_name")).join(
-            Customer, ProjectRequest.customer_id == Customer.id
-        ).where(ProjectRequest.id == briefing_id).limit(1)
+        select(ProjectRequest, Customer.name.label("customer_name"))
+        .join(Customer, ProjectRequest.customer_id == Customer.id)
+        .where(ProjectRequest.id == briefing_id)
+        .limit(1)
     )
     row = r.one_or_none()
     if not row:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Briefing not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Briefing not found"
+        )
     pr, customer_name = row
-    safe_name = "".join(c if c.isalnum() or c in " -_" else "_" for c in (pr.project_name or "briefing"))
+    safe_name = "".join(
+        c if c.isalnum() or c in " -_" else "_" for c in (pr.project_name or "briefing")
+    )
     filename = f"briefing-{pr.id}-{safe_name}.txt"
     content = _format_briefing_as_text(pr, customer_name or "")
     return Response(

@@ -1,8 +1,9 @@
 """Customer password reset token (portal forgot password)."""
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
 
@@ -16,9 +17,15 @@ class CustomerPasswordResetToken(Base):
     customer_user_id: Mapped[int] = mapped_column(
         ForeignKey("customer_users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    token: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    token: Mapped[str] = mapped_column(
+        String(255), nullable=False, unique=True, index=True
+    )
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )
 
     # Optional: relationship to CustomerUser if needed
     # customer_user: Mapped["CustomerUser"] = relationship("CustomerUser", back_populates="password_reset_tokens")

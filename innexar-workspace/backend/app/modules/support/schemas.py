@@ -1,4 +1,5 @@
 """Support schemas."""
+
 from datetime import datetime
 
 from pydantic import BaseModel
@@ -9,7 +10,9 @@ class TicketCreate(BaseModel):
 
     subject: str
     customer_id: int | None = None
-    category: str | None = None  # suporte_tecnico, alteracao_site, modificacao, novo_projeto, financeiro
+    category: str | None = (
+        None  # suporte_tecnico, alteracao_site, modificacao, novo_projeto, financeiro
+    )
     project_id: int | None = None
 
 

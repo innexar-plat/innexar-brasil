@@ -1,16 +1,16 @@
 """Portal notifications: list and mark read."""
-from datetime import datetime, timezone
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import UTC, datetime
+from typing import Annotated
 
 from app.core.auth_customer import get_current_customer
 from app.core.database import get_db
 from app.models.customer_user import CustomerUser
 from app.models.notification import Notification
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/notifications", tags=["portal-notifications"])
 
@@ -59,5 +59,5 @@ async def mark_read(
     n = r.scalar_one_or_none()
     if not n:
         raise HTTPException(status_code=404, detail="Notification not found")
-    n.read_at = datetime.now(timezone.utc)
+    n.read_at = datetime.now(UTC)
     await db.flush()

@@ -1,5 +1,4 @@
 """Unit tests for billing provisioning helpers (_sanitize_hestia_user, _domain_from_line_items)."""
-import pytest
 
 from app.modules.billing.provisioning import (
     _domain_from_line_items,
@@ -47,7 +46,9 @@ class TestDomainFromLineItems:
         assert _domain_from_line_items(items) is None
 
     def test_dict_with_domain(self) -> None:
-        assert _domain_from_line_items({"domain": "app.example.com"}) == "app.example.com"
+        assert (
+            _domain_from_line_items({"domain": "app.example.com"}) == "app.example.com"
+        )
 
     def test_dict_without_domain_returns_none(self) -> None:
         assert _domain_from_line_items({"description": "x"}) is None

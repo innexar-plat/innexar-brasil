@@ -1,11 +1,19 @@
 """Public API: unauthenticated routes (login, webhooks, web-to-lead, etc.)."""
+
 import secrets
 import time
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request, HTTPException, status  # noqa: I001
+from fastapi import (  # noqa: I001
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Request,
+    status,
+)
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -60,7 +68,9 @@ async def customer_login(
         select(CustomerUser).where(CustomerUser.email == body.email.lower())
     )
     customer_user = result.scalar_one_or_none()
-    if customer_user is None or not verify_password(body.password, customer_user.password_hash):
+    if customer_user is None or not verify_password(
+        body.password, customer_user.password_hash
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou senha incorretos",
@@ -110,11 +120,13 @@ async def customer_forgot_password(
 ) -> dict[str, str]:
     """Public: request password reset. Sends email with link if account exists. Always returns 200."""
     email_lower = body.email.lower().strip()
-    r = await db.execute(select(CustomerUser).where(CustomerUser.email == email_lower).limit(1))
+    r = await db.execute(
+        select(CustomerUser).where(CustomerUser.email == email_lower).limit(1)
+    )
     cu = r.scalar_one_or_none()
     if cu:
         token = secrets.token_urlsafe(32)
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+        expires_at = datetime.now(UTC) + timedelta(hours=24)
         row = CustomerPasswordResetToken(
             customer_user_id=cu.id,
             token=token,
@@ -122,10 +134,14 @@ async def customer_forgot_password(
         )
         db.add(row)
         await db.flush()
-        base_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000").rstrip("/")
+        base_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000").rstrip(
+            "/"
+        )
         reset_link = f"{base_url}/portal/reset-password?token={token}"
         background_tasks.add_task(_send_reset_email, email_lower, reset_link, "innexar")
-    return {"message": "If an account exists with this email, you will receive a reset link."}
+    return {
+        "message": "If an account exists with this email, you will receive a reset link."
+    }
 
 
 @router.post("/auth/customer/reset-password", status_code=200)
@@ -139,7 +155,7 @@ async def customer_reset_password(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Token and password (min 6 characters) required",
         )
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     r = await db.execute(
         select(CustomerPasswordResetToken)
         .where(
@@ -154,14 +170,27 @@ async def customer_reset_password(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired reset token",
         )
-    cu_r = await db.execute(select(CustomerUser).where(CustomerUser.id == row.customer_user_id).limit(1))
+    cu_r = await db.execute(
+        select(CustomerUser).where(CustomerUser.id == row.customer_user_id).limit(1)
+    )
     cu = cu_r.scalar_one_or_none()
     if not cu:
-        await db.execute(delete(CustomerPasswordResetToken).where(CustomerPasswordResetToken.id == row.id))
+        await db.execute(
+            delete(CustomerPasswordResetToken).where(
+                CustomerPasswordResetToken.id == row.id
+            )
+        )
         await db.flush()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token",
+        )
     cu.password_hash = hash_password(body.new_password)
-    await db.execute(delete(CustomerPasswordResetToken).where(CustomerPasswordResetToken.customer_user_id == cu.id))
+    await db.execute(
+        delete(CustomerPasswordResetToken).where(
+            CustomerPasswordResetToken.customer_user_id == cu.id
+        )
+    )
     await db.flush()
     return {"message": "Password updated. You can now log in."}
 

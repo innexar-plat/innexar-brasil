@@ -1,23 +1,32 @@
 """Workspace billing routes: products, price_plans, subscriptions, invoices."""
-from datetime import datetime, timezone
+
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from sqlalchemy.orm import selectinload
 
 from app.core.audit import log_audit
-from app.core.auth_staff import get_current_staff
 from app.core.database import AsyncSessionLocal, get_db
 from app.core.rbac import RequirePermission
 from app.models.customer import Customer
 from app.models.user import User
 from app.modules.billing.dependencies import require_billing_enabled
 from app.modules.billing.enums import InvoiceStatus
-from app.modules.billing.models import Invoice, PricePlan, Product, ProvisioningRecord, Subscription
-from app.modules.billing.overdue import process_overdue_invoices, reactivate_subscription_after_payment, sync_subscription_status_to_hestia
+from app.modules.billing.models import (
+    Invoice,
+    PricePlan,
+    Product,
+    ProvisioningRecord,
+    Subscription,
+)
+from app.modules.billing.overdue import (
+    process_overdue_invoices,
+    reactivate_subscription_after_payment,
+    sync_subscription_status_to_hestia,
+)
 from app.modules.billing.provisioning import trigger_provisioning_if_needed
 from app.modules.billing.schemas import (
     InvoiceCreate,
@@ -78,7 +87,9 @@ def _invoice_to_response(inv: Invoice) -> dict:
 
 
 # ----- Products -----
-@router.get("/products", response_model=list[ProductResponse] | list[ProductWithPlansResponse])
+@router.get(
+    "/products", response_model=list[ProductResponse] | list[ProductWithPlansResponse]
+)
 async def list_products(
     db: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[User, Depends(RequirePermission("billing:read"))],
@@ -97,7 +108,9 @@ async def list_products(
     return [
         ProductWithPlansResponse(
             **ProductResponse.model_validate(p).model_dump(),
-            price_plans=[PricePlanResponse.model_validate(pp) for pp in by_product.get(p.id, [])],
+            price_plans=[
+                PricePlanResponse.model_validate(pp) for pp in by_product.get(p.id, [])
+            ],
         )
         for p in products
     ]
@@ -277,7 +290,9 @@ async def update_subscription(
     current: Annotated[User, Depends(RequirePermission("billing:write"))],
     __: Annotated[None, Depends(require_billing_enabled)],
 ):
-    r = await db.execute(select(Subscription).where(Subscription.id == subscription_id).limit(1))
+    r = await db.execute(
+        select(Subscription).where(Subscription.id == subscription_id).limit(1)
+    )
     sub = r.scalar_one_or_none()
     if not sub:
         raise HTTPException(status_code=404, detail="Subscription not found")
@@ -285,7 +300,9 @@ async def update_subscription(
         new_status = body.status
         sub.status = new_status
         org_id = current.org_id or "innexar"
-        await sync_subscription_status_to_hestia(db, subscription_id, new_status, org_id)
+        await sync_subscription_status_to_hestia(
+            db, subscription_id, new_status, org_id
+        )
     if body.start_date is not None:
         sub.start_date = body.start_date
     if body.end_date is not None:
@@ -297,7 +314,9 @@ async def update_subscription(
     return sub
 
 
-@router.post("/subscriptions/{subscription_id}/link-hestia", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/subscriptions/{subscription_id}/link-hestia", status_code=status.HTTP_201_CREATED
+)
 async def link_hestia_user(
     subscription_id: int,
     body: LinkHestiaBody,
@@ -314,10 +333,12 @@ async def link_hestia_user(
         raise HTTPException(status_code=404, detail="Subscription not found")
     if body.invoice_id is not None:
         inv_r = await db.execute(
-            select(Invoice).where(
+            select(Invoice)
+            .where(
                 Invoice.id == body.invoice_id,
                 Invoice.subscription_id == subscription_id,
-            ).limit(1)
+            )
+            .limit(1)
         )
         if inv_r.scalar_one_or_none() is None:
             raise HTTPException(
@@ -335,7 +356,7 @@ async def link_hestia_user(
         panel_url=None,
         panel_password_encrypted=None,
         status="provisioned",
-        provisioned_at=datetime.now(timezone.utc),
+        provisioned_at=datetime.now(UTC),
     )
     db.add(rec)
     await db.flush()
@@ -409,7 +430,7 @@ async def invoice_payment_link(
         res = await create_payment_attempt(db, invoice_id, success_url, cancel_url)
         return {"payment_url": res.payment_url}
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/invoices/{invoice_id}/pay-bricks", response_model=PayResponse)
@@ -443,7 +464,9 @@ async def invoice_pay_bricks(
 
     cust = (
         await db.execute(
-            select(Customer).where(Customer.id == inv.customer_id).options(selectinload(Customer.users))
+            select(Customer)
+            .where(Customer.id == inv.customer_id)
+            .options(selectinload(Customer.users))
         )
     ).scalar_one_or_none()
     if cust and not cust.mp_customer_id:
@@ -473,7 +496,7 @@ async def invoice_pay_bricks(
             external_reference=str(inv.id),
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     payment_status = (payment.get("status") or "").lower()
     payment_id = str(payment.get("id", ""))
@@ -481,10 +504,12 @@ async def invoice_pay_bricks(
     inv.external_id = payment_id
     if payment_status == "approved":
         inv.status = InvoiceStatus.PAID.value
-        inv.paid_at = datetime.now(timezone.utc)
+        inv.paid_at = datetime.now(UTC)
         if inv.subscription_id:
             sub_r = await db.execute(
-                select(Subscription).where(Subscription.id == inv.subscription_id).limit(1)
+                select(Subscription)
+                .where(Subscription.id == inv.subscription_id)
+                .limit(1)
             )
             sub = sub_r.scalar_one_or_none()
             if sub:
@@ -516,7 +541,9 @@ async def invoice_pay_bricks(
             "cc_rejected_insufficient_amount": "Saldo insuficiente.",
             "cc_rejected_other_reason": "Pagamento recusado. Tente outro cartão.",
         }
-        error_message = error_messages.get(status_detail, "Pagamento recusado. Tente novamente.")
+        error_message = error_messages.get(
+            status_detail, "Pagamento recusado. Tente novamente."
+        )
 
     poi = payment.get("point_of_interaction", {}) or {}
     tx_data = poi.get("transaction_data", {}) or {}
@@ -580,7 +607,8 @@ async def billing_generate_recurring_invoices(
 ):
     """Generate next invoice for active subscriptions whose next_due_date is due (or within days_before_due).
     If send_reminders=True, also send email + in-portal reminder for PENDING invoices due in the next 2 days.
-    Example cron: POST ?days_before_due=2&send_reminders=true to generate 2 days early and send reminders."""
+    Example cron: POST ?days_before_due=2&send_reminders=true to generate 2 days early and send reminders.
+    """
     org_id = current.org_id or "innexar"
     count = await generate_recurring_invoices(
         db, org_id=org_id, days_before_due=days_before_due

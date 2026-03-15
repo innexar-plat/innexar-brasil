@@ -1,4 +1,5 @@
 """Storage backend interface (S3-compatible)."""
+
 from abc import ABC, abstractmethod
 from typing import BinaryIO
 
@@ -7,7 +8,9 @@ class StorageBackend(ABC):
     """Abstract storage backend: put, get, list, delete. All methods are async."""
 
     @abstractmethod
-    async def put(self, key: str, body: BinaryIO | bytes, content_type: str | None = None) -> None:
+    async def put(
+        self, key: str, body: BinaryIO | bytes, content_type: str | None = None
+    ) -> None:
         """Upload object. Key is full path (e.g. projects/123/file.pdf)."""
 
     @abstractmethod

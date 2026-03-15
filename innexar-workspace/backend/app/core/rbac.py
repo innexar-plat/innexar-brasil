@@ -1,4 +1,5 @@
 """RBAC: require_permission dependency for workspace routes."""
+
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
@@ -16,9 +17,9 @@ from app.models.user import User
 async def get_user_permission_slugs(db: AsyncSession, user_id: int) -> set[str]:
     """Return set of permission slugs for user (via roles). Admin role has all permissions."""
     result = await db.execute(
-        select(User).where(User.id == user_id).options(
-            selectinload(User.roles).selectinload(Role.permissions)
-        )
+        select(User)
+        .where(User.id == user_id)
+        .options(selectinload(User.roles).selectinload(Role.permissions))
     )
     user = result.scalar_one_or_none()
     if not user:
@@ -33,7 +34,7 @@ async def get_user_permission_slugs(db: AsyncSession, user_id: int) -> set[str]:
     return slugs
 
 
-def RequirePermission(permission: str):
+def RequirePermission(permission: str):  # noqa: N802
     """Return a Depends() that requires the given permission. Use: Depends(RequirePermission('billing:read'))."""
 
     async def _check(

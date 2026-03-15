@@ -1,4 +1,5 @@
 """Audit log: log_audit() for critical changes."""
+
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession

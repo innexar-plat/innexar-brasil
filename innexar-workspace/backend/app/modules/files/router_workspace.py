@@ -1,10 +1,6 @@
 """Workspace project files: list, download (staff can access any project)."""
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import Response
+from typing import Annotated
 
 from app.core.database import get_db
 from app.core.rbac import RequirePermission
@@ -16,6 +12,10 @@ from app.modules.files.service import (
     list_project_files,
 )
 from app.modules.projects.models import Project
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import Response
 
 router = APIRouter(prefix="/projects", tags=["workspace-project-files"])
 

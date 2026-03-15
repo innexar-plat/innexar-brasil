@@ -1,4 +1,5 @@
 """Resolve Cloudflare client from IntegrationConfig."""
+
 import json
 from typing import TYPE_CHECKING
 
@@ -12,7 +13,9 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def get_cloudflare_client(db: "AsyncSession", org_id: str = "innexar") -> CloudflareClient | None:
+async def get_cloudflare_client(
+    db: "AsyncSession", org_id: str = "innexar"
+) -> CloudflareClient | None:
     """Load Cloudflare config from IntegrationConfig (tenant then global) and return client."""
     for scope in ("tenant", "global"):
         q = select(IntegrationConfig).where(
@@ -42,7 +45,9 @@ async def get_cloudflare_client(db: "AsyncSession", org_id: str = "innexar") -> 
                     api_token = (data.get("api_token") or "").strip()
                     account_id = (data.get("account_id") or "").strip() or None
                     if api_token:
-                        return CloudflareClient(api_token=api_token, account_id=account_id)
+                        return CloudflareClient(
+                            api_token=api_token, account_id=account_id
+                        )
                 except (json.JSONDecodeError, TypeError):
                     pass
     return None

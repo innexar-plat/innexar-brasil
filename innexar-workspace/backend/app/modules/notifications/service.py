@@ -1,10 +1,10 @@
 """Notifications service: create notification and optionally send email."""
-from typing import TYPE_CHECKING
 
-from fastapi import BackgroundTasks
+from typing import TYPE_CHECKING
 
 from app.models.notification import Notification
 from app.providers.email.loader import get_email_provider
+from fastapi import BackgroundTasks
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

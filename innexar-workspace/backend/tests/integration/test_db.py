@@ -1,15 +1,15 @@
 """Integration tests: create User, Customer, CustomerUser and read back."""
+
 import uuid
 
 import pytest
 import pytest_asyncio
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.security import hash_password
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
 from app.models.user import User
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest_asyncio.fixture
@@ -62,7 +62,9 @@ async def test_create_and_read_user(
     sample_staff_user: User,
 ) -> None:
     """Create User and read back."""
-    result = await db_session.execute(select(User).where(User.email == sample_staff_user.email))
+    result = await db_session.execute(
+        select(User).where(User.email == sample_staff_user.email)
+    )
     found = result.scalar_one_or_none()
     assert found is not None
     assert found.id == sample_staff_user.id
@@ -77,7 +79,9 @@ async def test_create_and_read_customer_and_user(
 ) -> None:
     """Create Customer and CustomerUser and read back."""
     customer, customer_user = sample_customer_and_user
-    result = await db_session.execute(select(Customer).where(Customer.id == customer.id))
+    result = await db_session.execute(
+        select(Customer).where(Customer.id == customer.id)
+    )
     found_customer = result.scalar_one_or_none()
     assert found_customer is not None
     assert found_customer.name == "Acme Corp"

@@ -1,4 +1,5 @@
 """Customer (portal client) model."""
+
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
@@ -25,8 +26,12 @@ class Customer(Base):
     email: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     phone: Mapped[str | None] = mapped_column(String(64), nullable=True)
     address: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
-    mp_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )
+    mp_customer_id: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, index=True
+    )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow
@@ -41,6 +46,4 @@ class Customer(Base):
     projects: Mapped[list["Project"]] = relationship(
         "Project", back_populates="customer"
     )
-    tickets: Mapped[list["Ticket"]] = relationship(
-        "Ticket", back_populates="customer"
-    )
+    tickets: Mapped[list["Ticket"]] = relationship("Ticket", back_populates="customer")

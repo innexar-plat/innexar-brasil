@@ -1,4 +1,6 @@
 """HestiaCP REST API client: hash auth, v-add-user, v-add-web-domain, v-suspend-user, v-unsuspend-user."""
+
+import contextlib
 import json
 import logging
 
@@ -8,10 +10,22 @@ logger = logging.getLogger(__name__)
 
 
 # Chaves que não são usuários/domínios/pacotes na resposta da API Hestia (metadados)
-_NON_ITEM_KEYS = frozenset({
-    "returncode", "answer", "json", "data", "format", "version",
-    "total", "count", "limit", "offset", "status", "message",
-})
+_NON_ITEM_KEYS = frozenset(
+    {
+        "returncode",
+        "answer",
+        "json",
+        "data",
+        "format",
+        "version",
+        "total",
+        "count",
+        "limit",
+        "offset",
+        "status",
+        "message",
+    }
+)
 
 
 def _extract_list_payload(data: dict, cmd: str = "") -> list | dict | str | None:
@@ -20,21 +34,29 @@ def _extract_list_payload(data: dict, cmd: str = "") -> list | dict | str | None
         if key in data and data[key] is not None:
             val = data[key]
             if isinstance(val, str) and val.strip().startswith("{"):
-                try:
+                with contextlib.suppress(json.JSONDecodeError):
                     val = json.loads(val)
-                except json.JSONDecodeError:
-                    pass
-            logger.info("Hestia %s: payload from key %r, type=%s", cmd, key, type(val).__name__)
+            logger.info(
+                "Hestia %s: payload from key %r, type=%s", cmd, key, type(val).__name__
+            )
             return val
     # Response can be {"returncode": 0, "user1": {...}, "user2": {...}} (keys = items)
     rest = {
-        k: v for k, v in data.items()
+        k: v
+        for k, v in data.items()
         if k not in _NON_ITEM_KEYS and not k.isdigit() and isinstance(v, dict)
     }
     if rest:
-        logger.info("Hestia %s: payload from top-level keys (count=%d), sample keys=%s", cmd, len(rest), list(rest.keys())[:5])
+        logger.info(
+            "Hestia %s: payload from top-level keys (count=%d), sample keys=%s",
+            cmd,
+            len(rest),
+            list(rest.keys())[:5],
+        )
         return rest
-    logger.warning("Hestia %s: no payload found. response keys=%s", cmd, list(data.keys()))
+    logger.warning(
+        "Hestia %s: no payload found. response keys=%s", cmd, list(data.keys())
+    )
     return None
 
 
@@ -45,7 +67,9 @@ def _parse_hestia_list(answer: list | dict | str | None) -> list[dict]:
     if isinstance(answer, list):
         return [x if isinstance(x, dict) else {"name": str(x)} for x in answer]
     if isinstance(answer, dict):
-        return [{"name": k, **(v if isinstance(v, dict) else {})} for k, v in answer.items()]
+        return [
+            {"name": k, **(v if isinstance(v, dict) else {})} for k, v in answer.items()
+        ]
     if isinstance(answer, str):
         lines = [s.strip() for s in answer.strip().split("\n") if s.strip()]
         return [{"name": line} for line in lines]
@@ -59,7 +83,9 @@ class HestiaClient:
         self.base_url = base_url.rstrip("/")
         self._hash = f"{access_key}:{secret_key}"
 
-    def request(self, cmd: str, returncode: bool = True, **args: str | int | bool) -> dict:
+    def request(
+        self, cmd: str, returncode: bool = True, **args: str | int | bool
+    ) -> dict:
         """Execute Hestia command. args: arg1, arg2, arg3... (order matters for CLI)."""
         payload: dict[str, str | int] = {
             "hash": self._hash,
@@ -82,7 +108,9 @@ class HestiaClient:
             try:
                 code = int(hestia_code)
                 if code != 0:
-                    raise RuntimeError(f"Hestia {cmd} failed: exit code {code} (check Hestia-Exit-Code header)")
+                    raise RuntimeError(
+                        f"Hestia {cmd} failed: exit code {code} (check Hestia-Exit-Code header)"
+                    )
             except ValueError:
                 pass
         if isinstance(raw, dict):
@@ -147,7 +175,9 @@ class HestiaClient:
     ) -> None:
         """Ensure web domain exists (idempotent: add if missing; Hestia may raise if already exists)."""
         try:
-            self.add_web_domain(user=user, domain=domain, ip=ip, restart=restart, aliases=aliases)
+            self.add_web_domain(
+                user=user, domain=domain, ip=ip, restart=restart, aliases=aliases
+            )
         except RuntimeError as e:
             if "already exists" in str(e).lower() or "exist" in str(e).lower():
                 return
@@ -203,7 +233,9 @@ class HestiaClient:
     def list_web_domains(self, user: str) -> list[dict]:
         """List web domains for a user (v-list-web-domains). returncode=no to get JSON in body."""
         try:
-            out = self.request("v-list-web-domains", returncode=False, arg1=user, arg2="json")
+            out = self.request(
+                "v-list-web-domains", returncode=False, arg1=user, arg2="json"
+            )
             payload = _extract_list_payload(out, "v-list-web-domains")
             if payload is None:
                 return []
@@ -244,7 +276,13 @@ class HestiaClient:
 
     def list_mail_domain_dkim_dns(self, user: str, domain: str) -> dict:
         """Get DKIM DNS TXT value for mail._domainkey (v-list-mail-domain-dkim-dns). API: arg1=user, arg2=domain, arg3=json."""
-        out = self.request("v-list-mail-domain-dkim-dns", returncode=True, arg1=user, arg2=domain, arg3="json")
+        out = self.request(
+            "v-list-mail-domain-dkim-dns",
+            returncode=True,
+            arg1=user,
+            arg2=domain,
+            arg3="json",
+        )
         payload = _extract_list_payload(out)
         if isinstance(payload, dict):
             return payload
@@ -252,4 +290,6 @@ class HestiaClient:
 
     def add_letsencrypt_domain(self, user: str, domain: str) -> None:
         """Request Let's Encrypt SSL for domain (v-add-letsencrypt-domain). Run after DNS propagation."""
-        self.request("v-add-letsencrypt-domain", returncode=True, arg1=user, arg2=domain)
+        self.request(
+            "v-add-letsencrypt-domain", returncode=True, arg1=user, arg2=domain
+        )

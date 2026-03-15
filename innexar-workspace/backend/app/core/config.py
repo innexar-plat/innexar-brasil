@@ -1,5 +1,4 @@
 """Application configuration via pydantic-settings."""
-from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -14,7 +13,9 @@ class Settings(BaseSettings):
     )
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://workspace_user:change_me@localhost:5432/innexar_workspace"
+    DATABASE_URL: str = (
+        "postgresql+asyncpg://workspace_user:change_me@localhost:5432/innexar_workspace"
+    )
     DATABASE_URL_TEST: str | None = None
 
     # Redis (optional)
@@ -47,7 +48,7 @@ class Settings(BaseSettings):
     MINIO_SECURE: bool = False
 
     @property
-    def cors_origins_list(self) -> List[str]:
+    def cors_origins_list(self) -> list[str]:
         """Parse CORS_ORIGINS string into list."""
         if isinstance(self.CORS_ORIGINS, str):
             return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

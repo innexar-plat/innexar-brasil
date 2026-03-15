@@ -1,4 +1,5 @@
 """Notification model (in_app / email)."""
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -27,7 +28,9 @@ class Notification(Base):
     channel: Mapped[str] = mapped_column(String(32), default="in_app")  # in_app | email
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=True)
-    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    read_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow
     )

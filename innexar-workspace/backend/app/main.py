@@ -1,4 +1,5 @@
 """Innexar Workspace API - 3-layer backend."""
+
 import logging
 import re
 from contextlib import asynccontextmanager
@@ -11,28 +12,6 @@ from starlette.responses import JSONResponse
 from app.api.portal_router import router as portal_router
 from app.api.public_router import router as public_router
 from app.api.workspace_router import router as workspace_router
-from app.modules.billing.router_portal import router as billing_portal_router
-from app.modules.billing.router_public import router as billing_public_router
-from app.modules.checkout.router_public import router as checkout_public_router
-from app.modules.products.router_public import router as products_public_router
-from app.modules.billing.router_workspace import router as billing_workspace_router
-from app.modules.crm.router_workspace import router as crm_workspace_router
-from app.modules.customers.router_workspace import router as customers_workspace_router
-from app.modules.files.router_portal import router as files_portal_router
-from app.modules.files.router_workspace import router as files_workspace_router
-from app.modules.projects.router_portal import router as projects_portal_router
-from app.modules.projects.router_workspace import router as projects_workspace_router
-from app.modules.support.router_portal import router as support_portal_router
-from app.modules.support.router_workspace import router as support_workspace_router
-from app.modules.dashboard.router_workspace import router as dashboard_workspace_router
-from app.modules.notifications.router_portal import router as notifications_portal_router
-from app.modules.orders.router_workspace import router as orders_workspace_router
-from app.modules.hestia.router_workspace import router as hestia_workspace_router
-from app.modules.system.router_workspace import (
-    hestia_config_router as system_hestia_config_router,
-    integrations_router as system_integrations_router,
-    seed_router as system_seed_router,
-)
 from app.core.config import settings
 from app.core.database import Base, engine, ensure_mp_subscription_schema
 
@@ -61,10 +40,38 @@ from app.modules.billing.models import (  # noqa: F401
     Subscription,
     WebhookEvent,
 )
+from app.modules.billing.router_portal import router as billing_portal_router
+from app.modules.billing.router_public import router as billing_public_router
+from app.modules.billing.router_workspace import router as billing_workspace_router
+from app.modules.checkout.router_public import router as checkout_public_router
 from app.modules.crm.models import Contact  # noqa: F401
+from app.modules.crm.router_workspace import router as crm_workspace_router
+from app.modules.customers.router_workspace import router as customers_workspace_router
+from app.modules.dashboard.router_workspace import router as dashboard_workspace_router
 from app.modules.files.models import ProjectFile  # noqa: F401
+from app.modules.files.router_portal import router as files_portal_router
+from app.modules.files.router_workspace import router as files_workspace_router
+from app.modules.hestia.router_workspace import router as hestia_workspace_router
+from app.modules.notifications.router_portal import (
+    router as notifications_portal_router,
+)
+from app.modules.orders.router_workspace import router as orders_workspace_router
+from app.modules.products.router_public import router as products_public_router
 from app.modules.projects.models import Project  # noqa: F401
+from app.modules.projects.router_portal import router as projects_portal_router
+from app.modules.projects.router_workspace import router as projects_workspace_router
 from app.modules.support.models import Ticket, TicketMessage  # noqa: F401
+from app.modules.support.router_portal import router as support_portal_router
+from app.modules.support.router_workspace import router as support_workspace_router
+from app.modules.system.router_workspace import (
+    hestia_config_router as system_hestia_config_router,
+)
+from app.modules.system.router_workspace import (
+    integrations_router as system_integrations_router,
+)
+from app.modules.system.router_workspace import (
+    seed_router as system_seed_router,
+)
 
 
 @asynccontextmanager
@@ -154,8 +161,18 @@ app.include_router(billing_public_router, prefix="/api/public")
 @app.get(
     "/health",
     responses={
-        200: {"description": "OK", "content": {"application/json": {"example": {"status": "ok", "database": "ok"}}}},
-        503: {"description": "Database unreachable", "content": {"application/json": {"example": {"detail": "database unreachable"}}}},
+        200: {
+            "description": "OK",
+            "content": {
+                "application/json": {"example": {"status": "ok", "database": "ok"}}
+            },
+        },
+        503: {
+            "description": "Database unreachable",
+            "content": {
+                "application/json": {"example": {"detail": "database unreachable"}}
+            },
+        },
     },
 )
 async def health() -> dict[str, str]:

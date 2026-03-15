@@ -1,4 +1,5 @@
 """Feature flag model."""
+
 from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -11,6 +12,8 @@ class FeatureFlag(Base):
     __tablename__ = "feature_flags"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    key: Mapped[str] = mapped_column(String(128), unique=True, index=True, nullable=False)
+    key: Mapped[str] = mapped_column(
+        String(128), unique=True, index=True, nullable=False
+    )
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     description: Mapped[str | None] = mapped_column(String(512), nullable=True)

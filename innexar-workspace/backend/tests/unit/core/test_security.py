@@ -1,4 +1,5 @@
 """Unit tests for security (hash, verify, token create/decode)."""
+
 from app.core.security import (
     create_token_customer,
     create_token_staff,

@@ -1,4 +1,5 @@
 """Provisioning: after invoice paid, provision Hestia hosting if product type is hestia_hosting."""
+
 import logging
 import re
 import secrets
@@ -85,7 +86,9 @@ async def trigger_provisioning_if_needed(db: AsyncSession, invoice_id: int) -> N
 
     domain = _domain_from_line_items(inv.line_items)
     if not domain:
-        logger.warning("Provisioning skipped: no domain in invoice %s line_items", invoice_id)
+        logger.warning(
+            "Provisioning skipped: no domain in invoice %s line_items", invoice_id
+        )
         job.status = "failed"
         job.step = "create_user"
         job.last_error = "no domain in line_items"
@@ -104,7 +107,9 @@ async def trigger_provisioning_if_needed(db: AsyncSession, invoice_id: int) -> N
         await db.flush()
         return
 
-    cust_r = await db.execute(select(Customer).where(Customer.id == inv.customer_id).limit(1))
+    cust_r = await db.execute(
+        select(Customer).where(Customer.id == inv.customer_id).limit(1)
+    )
     customer = cust_r.scalar_one_or_none()
     customer_email = customer.email if customer else ""
     org_id = (customer.org_id if customer else None) or "innexar"
@@ -148,7 +153,12 @@ async def trigger_provisioning_if_needed(db: AsyncSession, invoice_id: int) -> N
     await db.flush()
 
     try:
-        client.create_user(user=hestia_user, password=password, email=customer_email or "", package=package)
+        client.create_user(
+            user=hestia_user,
+            password=password,
+            email=customer_email or "",
+            package=package,
+        )
         _append_log(job, "User created")
         job.step = "add_domain"
         await db.flush()
@@ -169,14 +179,19 @@ async def trigger_provisioning_if_needed(db: AsyncSession, invoice_id: int) -> N
                     if not zone:
                         zone = cf.create_zone(domain)
                         ns = zone.get("name_servers") or []
-                        _append_log(job, f"Cloudflare zone created; nameservers: {', '.join(ns)}")
+                        _append_log(
+                            job,
+                            f"Cloudflare zone created; nameservers: {', '.join(ns)}",
+                        )
                     else:
                         _append_log(job, "Cloudflare zone already exists")
                     zone_id = zone.get("id")
                     if zone_id:
                         job.step = "create_cloudflare_records"
                         await db.flush()
-                        cf.create_dns_record(zone_id, "MX", domain, f"mail.{domain}", priority=10)
+                        cf.create_dns_record(
+                            zone_id, "MX", domain, f"mail.{domain}", priority=10
+                        )
                         cf.create_dns_record(zone_id, "TXT", domain, "v=spf1 a mx ~all")
                         _append_log(job, "Cloudflare MX and SPF records created")
                 except Exception as cf_err:
@@ -224,4 +239,9 @@ async def trigger_provisioning_if_needed(db: AsyncSession, invoice_id: int) -> N
     job.completed_at = datetime.now(UTC)
     _append_log(job, "Provisioning completed")
     await db.flush()
-    logger.info("Provisioned Hestia for invoice %s: user=%s domain=%s", invoice_id, hestia_user, domain)
+    logger.info(
+        "Provisioned Hestia for invoice %s: user=%s domain=%s",
+        invoice_id,
+        hestia_user,
+        domain,
+    )

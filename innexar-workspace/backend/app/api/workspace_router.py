@@ -1,9 +1,16 @@
 """Workspace API: staff-only routes (login, me, forgot/reset/change password)."""
+
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status  # noqa: I001
+from fastapi import (  # noqa: I001
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    status,
+)
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,10 +24,10 @@ from app.providers.email.loader import get_email_provider
 from app.schemas.auth import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
+    LoginRequest,
     StaffLoginResponse,
     StaffMeResponse,
     StaffResetPasswordRequest,
-    LoginRequest,
 )
 
 router = APIRouter()
@@ -89,7 +96,7 @@ async def staff_forgot_password(
     user = r.scalar_one_or_none()
     if user:
         token = secrets.token_urlsafe(32)
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+        expires_at = datetime.now(UTC) + timedelta(hours=24)
         row = StaffPasswordResetToken(
             user_id=user.id,
             token=token,
@@ -97,7 +104,9 @@ async def staff_forgot_password(
         )
         db.add(row)
         await db.flush()
-        base_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000").rstrip("/")
+        base_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000").rstrip(
+            "/"
+        )
         reset_link = f"{base_url}/workspace/reset-password?token={token}"
         org_id = user.org_id or "innexar"
         background_tasks.add_task(
@@ -119,7 +128,7 @@ async def staff_reset_password(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Token e senha (mín. 6 caracteres) são obrigatórios",
         )
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     r = await db.execute(
         select(StaffPasswordResetToken)
         .where(
@@ -147,7 +156,9 @@ async def staff_reset_password(
         )
     user.password_hash = hash_password(body.new_password)
     await db.execute(
-        delete(StaffPasswordResetToken).where(StaffPasswordResetToken.user_id == user.id)
+        delete(StaffPasswordResetToken).where(
+            StaffPasswordResetToken.user_id == user.id
+        )
     )
     await db.flush()
     return {"message": "Senha atualizada. Faça login novamente."}

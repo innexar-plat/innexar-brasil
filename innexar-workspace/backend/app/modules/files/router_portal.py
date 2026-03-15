@@ -1,10 +1,6 @@
 """Portal project files: upload, list, download (customer must own project)."""
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import Response
+from typing import Annotated
 
 from app.core.auth_customer import get_current_customer
 from app.core.database import get_db
@@ -17,13 +13,19 @@ from app.modules.files.service import (
     upload_project_file,
 )
 from app.modules.projects.models import Project
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import Response
 
 router = APIRouter(prefix="/projects", tags=["portal-project-files"])
 
 MAX_FILE_SIZE = 25 * 1024 * 1024  # 25 MB
 
 
-async def _ensure_project_owned(db: AsyncSession, project_id: int, customer_id: int) -> None:
+async def _ensure_project_owned(
+    db: AsyncSession, project_id: int, customer_id: int
+) -> None:
     """Raise 404 if project does not exist or is not owned by customer."""
     r = await db.execute(
         select(Project).where(

@@ -1,7 +1,8 @@
 """Billing service: invoices, payment attempts, webhooks."""
+
 import hashlib
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
@@ -24,11 +25,10 @@ from app.modules.billing.models import (
     Subscription,
     WebhookEvent,
 )
+from app.modules.billing.overdue import reactivate_subscription_after_payment
 from app.providers.payments.base import PaymentLinkResult
 from app.providers.payments.mercadopago import MercadoPagoProvider
 from app.providers.payments.stripe import StripeProvider
-
-from app.modules.billing.overdue import reactivate_subscription_after_payment
 
 INTERVAL_ONE_TIME = "one_time"
 
@@ -60,7 +60,11 @@ async def _get_payment_provider(
 
     # Mercado Pago: prefer env when set, so .env (MP_ACCESS_TOKEN) overrides DB and avoids 401 from wrong token in IntegrationConfig
     if provider_name == "mercadopago":
-        env_token = (os.environ.get("MP_ACCESS_TOKEN") or os.environ.get("MERCADOPAGO_ACCESS_TOKEN") or "").strip()
+        env_token = (
+            os.environ.get("MP_ACCESS_TOKEN")
+            or os.environ.get("MERCADOPAGO_ACCESS_TOKEN")
+            or ""
+        ).strip()
         if env_token:
             return MercadoPagoProvider(access_token=env_token)
 
@@ -74,24 +78,36 @@ async def _get_payment_provider(
     # Lookup order: customer → tenant → global
     for scope in ["customer", "tenant", "global"]:
         if scope == "customer":
-            q = select(IntegrationConfig).where(
-                IntegrationConfig.scope == "customer",
-                IntegrationConfig.customer_id == customer_id,
-                *base_filters,
-            ).limit(1)
+            q = (
+                select(IntegrationConfig)
+                .where(
+                    IntegrationConfig.scope == "customer",
+                    IntegrationConfig.customer_id == customer_id,
+                    *base_filters,
+                )
+                .limit(1)
+            )
         elif scope == "tenant":
-            q = select(IntegrationConfig).where(
-                IntegrationConfig.scope == "tenant",
-                IntegrationConfig.org_id == org_id,
-                IntegrationConfig.customer_id.is_(None),
-                *base_filters,
-            ).limit(1)
+            q = (
+                select(IntegrationConfig)
+                .where(
+                    IntegrationConfig.scope == "tenant",
+                    IntegrationConfig.org_id == org_id,
+                    IntegrationConfig.customer_id.is_(None),
+                    *base_filters,
+                )
+                .limit(1)
+            )
         else:
-            q = select(IntegrationConfig).where(
-                IntegrationConfig.scope == "global",
-                IntegrationConfig.customer_id.is_(None),
-                *base_filters,
-            ).limit(1)
+            q = (
+                select(IntegrationConfig)
+                .where(
+                    IntegrationConfig.scope == "global",
+                    IntegrationConfig.customer_id.is_(None),
+                    *base_filters,
+                )
+                .limit(1)
+            )
         r = await db.execute(q)
         cfg = r.scalar_one_or_none()
         if cfg and cfg.value_encrypted:
@@ -140,19 +156,25 @@ async def create_payment_attempt(
     customer_phone: str | None = None,
 ) -> PaymentLinkResult:
     """Create payment attempt and return payment_url. Raises if invoice not payable."""
-    result = await db.execute(
-        select(Invoice).where(Invoice.id == invoice_id)
-    )
+    result = await db.execute(select(Invoice).where(Invoice.id == invoice_id))
     inv = result.scalar_one_or_none()
     if not inv:
         raise ValueError("Invoice not found")
     if inv.status == InvoiceStatus.PAID.value:
         raise ValueError("Invoice already paid")
     currency = (inv.currency or "BRL").upper()
-    cust = (await db.execute(select(Customer).where(Customer.id == inv.customer_id).limit(1))).scalar_one_or_none()
+    cust = (
+        await db.execute(
+            select(Customer).where(Customer.id == inv.customer_id).limit(1)
+        )
+    ).scalar_one_or_none()
     org_id = cust.org_id if cust else "innexar"
     provider = await _get_payment_provider(db, inv.customer_id, org_id, currency)
-    description = f"Fatura #{inv.id}" if (inv.currency or "BRL").upper() == "BRL" else f"Invoice #{inv.id}"
+    description = (
+        f"Fatura #{inv.id}"
+        if (inv.currency or "BRL").upper() == "BRL"
+        else f"Invoice #{inv.id}"
+    )
     if isinstance(provider, MercadoPagoProvider):
         res = provider.create_payment_link(
             invoice_id=inv.id,
@@ -206,7 +228,11 @@ async def create_subscription_checkout(
     if not inv.subscription_id:
         raise ValueError("Invoice has no subscription")
     currency = (inv.currency or "BRL").upper()
-    cust = (await db.execute(select(Customer).where(Customer.id == inv.customer_id).limit(1))).scalar_one_or_none()
+    cust = (
+        await db.execute(
+            select(Customer).where(Customer.id == inv.customer_id).limit(1)
+        )
+    ).scalar_one_or_none()
     org_id = cust.org_id if cust else "innexar"
     provider = await _get_payment_provider(db, inv.customer_id, org_id, currency)
     if not isinstance(provider, MercadoPagoProvider):
@@ -244,7 +270,9 @@ async def create_subscription_checkout(
     db.add(link)
     inv.status = InvoiceStatus.PENDING.value
     await db.flush()
-    return PaymentLinkResult(payment_url=plan_result.init_point, external_id=plan_result.plan_id)
+    return PaymentLinkResult(
+        payment_url=plan_result.init_point, external_id=plan_result.plan_id
+    )
 
 
 async def mark_invoice_paid(
@@ -256,14 +284,16 @@ async def mark_invoice_paid(
     org_id: str = "innexar",
 ) -> int | None:
     """Mark invoice as paid (manual override). Activates subscription and triggers reactivation. Returns invoice_id if paid (caller may run provisioning in background), None if not found or already paid."""
-    inv_result = await db.execute(select(Invoice).where(Invoice.id == invoice_id).limit(1))
+    inv_result = await db.execute(
+        select(Invoice).where(Invoice.id == invoice_id).limit(1)
+    )
     inv = inv_result.scalar_one_or_none()
     if not inv:
         return None
     if inv.status == InvoiceStatus.PAID.value:
         return None
     inv.status = InvoiceStatus.PAID.value
-    inv.paid_at = datetime.now(timezone.utc)
+    inv.paid_at = datetime.now(UTC)
     if inv.subscription_id:
         sub_r = await db.execute(
             select(Subscription).where(Subscription.id == inv.subscription_id).limit(1)
@@ -272,7 +302,7 @@ async def mark_invoice_paid(
         if sub:
             sub.status = SubscriptionStatus.ACTIVE.value
             if not sub.start_date:
-                sub.start_date = datetime.now(timezone.utc)
+                sub.start_date = datetime.now(UTC)
             await _set_subscription_next_due_if_recurring(db, sub)
             await reactivate_subscription_after_payment(db, sub.id, org_id=org_id)
     await log_audit(
@@ -312,26 +342,34 @@ async def process_webhook(
         if existing.scalar_one_or_none():
             return True, "already_processed", None
         payload_hash = hashlib.sha256(body).hexdigest()
-        ev = WebhookEvent(provider="stripe", event_id=event_id, payload_hash=payload_hash)
+        ev = WebhookEvent(
+            provider="stripe", event_id=event_id, payload_hash=payload_hash
+        )
         db.add(ev)
         paid_invoice_id: int | None = None
         if result.invoice_id:
-            inv_result = await db.execute(select(Invoice).where(Invoice.id == result.invoice_id))
+            inv_result = await db.execute(
+                select(Invoice).where(Invoice.id == result.invoice_id)
+            )
             inv = inv_result.scalar_one_or_none()
             if inv:
                 inv.status = InvoiceStatus.PAID.value
-                inv.paid_at = datetime.now(timezone.utc)
+                inv.paid_at = datetime.now(UTC)
                 paid_invoice_id = inv.id
                 if inv.subscription_id:
                     sub_r = await db.execute(
-                        select(Subscription).where(Subscription.id == inv.subscription_id).limit(1)
+                        select(Subscription)
+                        .where(Subscription.id == inv.subscription_id)
+                        .limit(1)
                     )
                     sub = sub_r.scalar_one_or_none()
                     if sub:
                         sub.status = SubscriptionStatus.ACTIVE.value
-                        sub.start_date = datetime.now(timezone.utc)
+                        sub.start_date = datetime.now(UTC)
                         await _set_subscription_next_due_if_recurring(db, sub)
-                        await reactivate_subscription_after_payment(db, sub.id, org_id="innexar")
+                        await reactivate_subscription_after_payment(
+                            db, sub.id, org_id="innexar"
+                        )
                 await log_audit(
                     db,
                     entity="invoice",
@@ -359,34 +397,42 @@ async def process_webhook(
         if existing.scalar_one_or_none():
             return True, "already_processed", None
         payload_hash = hashlib.sha256(body).hexdigest()
-        ev = WebhookEvent(provider="mercadopago", event_id=event_id, payload_hash=payload_hash)
+        ev = WebhookEvent(
+            provider="mercadopago", event_id=event_id, payload_hash=payload_hash
+        )
         db.add(ev)
         paid_invoice_id = None
         if result.mp_plan_id and result.mp_preapproval_id:
             link_r = await db.execute(
-                select(MPSubscriptionCheckout).where(
-                    MPSubscriptionCheckout.mp_plan_id == result.mp_plan_id
-                ).limit(1)
+                select(MPSubscriptionCheckout)
+                .where(MPSubscriptionCheckout.mp_plan_id == result.mp_plan_id)
+                .limit(1)
             )
             link = link_r.scalar_one_or_none()
             if link:
-                inv_result = await db.execute(select(Invoice).where(Invoice.id == link.invoice_id))
+                inv_result = await db.execute(
+                    select(Invoice).where(Invoice.id == link.invoice_id)
+                )
                 inv = inv_result.scalar_one_or_none()
                 if inv and inv.status != InvoiceStatus.PAID.value:
                     inv.status = InvoiceStatus.PAID.value
-                    inv.paid_at = datetime.now(timezone.utc)
+                    inv.paid_at = datetime.now(UTC)
                     paid_invoice_id = inv.id
                     if inv.subscription_id:
                         sub_r = await db.execute(
-                            select(Subscription).where(Subscription.id == inv.subscription_id).limit(1)
+                            select(Subscription)
+                            .where(Subscription.id == inv.subscription_id)
+                            .limit(1)
                         )
                         sub = sub_r.scalar_one_or_none()
                         if sub:
                             sub.status = SubscriptionStatus.ACTIVE.value
                             sub.external_id = result.mp_preapproval_id
-                            sub.start_date = sub.start_date or datetime.now(timezone.utc)
+                            sub.start_date = sub.start_date or datetime.now(UTC)
                             await _set_subscription_next_due_if_recurring(db, sub)
-                            await reactivate_subscription_after_payment(db, sub.id, org_id="innexar")
+                            await reactivate_subscription_after_payment(
+                                db, sub.id, org_id="innexar"
+                            )
                     await log_audit(
                         db,
                         entity="invoice",
@@ -397,22 +443,28 @@ async def process_webhook(
                         payload={"provider": "mercadopago", "subscription": True},
                     )
         elif result.invoice_id:
-            inv_result = await db.execute(select(Invoice).where(Invoice.id == result.invoice_id))
+            inv_result = await db.execute(
+                select(Invoice).where(Invoice.id == result.invoice_id)
+            )
             inv = inv_result.scalar_one_or_none()
             if inv:
                 inv.status = InvoiceStatus.PAID.value
-                inv.paid_at = datetime.now(timezone.utc)
+                inv.paid_at = datetime.now(UTC)
                 paid_invoice_id = inv.id
                 if inv.subscription_id:
                     sub_r = await db.execute(
-                        select(Subscription).where(Subscription.id == inv.subscription_id).limit(1)
+                        select(Subscription)
+                        .where(Subscription.id == inv.subscription_id)
+                        .limit(1)
                     )
                     sub = sub_r.scalar_one_or_none()
                     if sub:
                         sub.status = SubscriptionStatus.ACTIVE.value
-                        sub.start_date = datetime.now(timezone.utc)
+                        sub.start_date = datetime.now(UTC)
                         await _set_subscription_next_due_if_recurring(db, sub)
-                        await reactivate_subscription_after_payment(db, sub.id, org_id="innexar")
+                        await reactivate_subscription_after_payment(
+                            db, sub.id, org_id="innexar"
+                        )
                 await log_audit(
                     db,
                     entity="invoice",
@@ -436,9 +488,10 @@ async def generate_recurring_invoices(
     days_before_due: int = 0,
 ) -> int:
     """For active subscriptions with next_due_date <= (now + days_before_due), create the next invoice and advance next_due_date by 30 days. Returns count of invoices created.
-    Use days_before_due=2 to generate invoices 2 days before due so reminders can be sent."""
+    Use days_before_due=2 to generate invoices 2 days before due so reminders can be sent.
+    """
     if now is None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
     cutoff = now + timedelta(days=days_before_due) if days_before_due else now
     r = await db.execute(
         select(Subscription, PricePlan, Product)
@@ -504,11 +557,14 @@ async def charge_recurring_invoices(
         if not customer.mp_customer_id:
             continue
         try:
-            provider = await _get_payment_provider(db, customer.id, org_id, inv.currency or "BRL")
+            provider = await _get_payment_provider(
+                db, customer.id, org_id, inv.currency or "BRL"
+            )
             if not isinstance(provider, MercadoPagoProvider):
                 continue
             # Get customer's saved cards
             import httpx
+
             with httpx.Client(timeout=10.0) as client:
                 cards_resp = client.get(
                     f"https://api.mercadopago.com/v1/customers/{customer.mp_customer_id}/cards",
@@ -525,7 +581,9 @@ async def charge_recurring_invoices(
                 first = inv.line_items[0]
                 if isinstance(first, dict):
                     description_parts.append(str(first.get("description", "")))
-            description = description_parts[0] if description_parts else f"Invoice #{inv.id}"
+            description = (
+                description_parts[0] if description_parts else f"Invoice #{inv.id}"
+            )
 
             payment = provider.charge_saved_card(
                 customer_id=customer.mp_customer_id,
@@ -537,7 +595,7 @@ async def charge_recurring_invoices(
             pay_status = (payment.get("status") or "").lower()
             if pay_status == "approved":
                 inv.status = InvoiceStatus.PAID.value
-                inv.paid_at = datetime.now(timezone.utc)
+                inv.paid_at = datetime.now(UTC)
                 inv.external_id = str(payment.get("id", ""))
                 await reactivate_subscription_after_payment(db, sub.id, org_id=org_id)
                 charged += 1
@@ -545,9 +603,12 @@ async def charge_recurring_invoices(
                 failed += 1
         except Exception:
             import logging
+
             logging.getLogger(__name__).warning(
                 "Failed to charge recurring invoice %s for customer %s",
-                inv.id, customer.id, exc_info=True,
+                inv.id,
+                customer.id,
+                exc_info=True,
             )
             failed += 1
     await db.flush()
@@ -563,17 +624,19 @@ async def send_invoice_reminders(
     now: datetime | None = None,
 ) -> int:
     """Find PENDING invoices with due_date within the next days_ahead days and reminder_sent_at null;
-    create in-app notification + send email for each customer user and set reminder_sent_at. Returns count of invoices reminded."""
+    create in-app notification + send email for each customer user and set reminder_sent_at. Returns count of invoices reminded.
+    """
     from sqlalchemy.orm import selectinload
 
-    from app.modules.notifications.service import create_notification_and_maybe_send_email
+    from app.modules.notifications.service import (
+        create_notification_and_maybe_send_email,
+    )
 
     if now is None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
     end = now + timedelta(days=days_ahead)
     r = await db.execute(
-        select(Invoice)
-        .where(
+        select(Invoice).where(
             Invoice.status == InvoiceStatus.PENDING.value,
             Invoice.due_date >= now,
             Invoice.due_date <= end,
@@ -585,9 +648,9 @@ async def send_invoice_reminders(
     for inv in invoices:
         # Load customer with users
         cu_r = await db.execute(
-            select(Customer).where(Customer.id == inv.customer_id).options(
-                selectinload(Customer.users)
-            )
+            select(Customer)
+            .where(Customer.id == inv.customer_id)
+            .options(selectinload(Customer.users))
         )
         customer = cu_r.scalar_one_or_none()
         if not customer or not customer.users:
@@ -595,7 +658,11 @@ async def send_invoice_reminders(
             reminded += 1
             continue
         due_str = inv.due_date.strftime("%d/%m/%Y") if inv.due_date else ""
-        total_str = f"R$ {inv.total:.2f}" if (inv.currency or "").upper() == "BRL" else f"{inv.total:.2f} {inv.currency or ''}"
+        total_str = (
+            f"R$ {inv.total:.2f}"
+            if (inv.currency or "").upper() == "BRL"
+            else f"{inv.total:.2f} {inv.currency or ''}"
+        )
         title = "Lembrete: fatura em breve"
         body = f"Sua fatura #{inv.id} vence em {due_str}. Valor: {total_str}. Acesse o portal para pagar."
         for cu in customer.users:
@@ -613,4 +680,3 @@ async def send_invoice_reminders(
         reminded += 1
     await db.flush()
     return reminded
-

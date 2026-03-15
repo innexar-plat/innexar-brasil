@@ -1,8 +1,9 @@
 """Portal project request: customer requests a new project (e.g. site, landing)."""
+
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import DateTime, ForeignKey, JSON, String, Text
+from sqlalchemy import JSON, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -34,4 +35,6 @@ class ProjectRequest(Base):
         DateTime(timezone=True), default=datetime.utcnow
     )
 
-    project: Mapped["Project | None"] = relationship("Project", backref="briefing_requests")
+    project: Mapped["Project | None"] = relationship(
+        "Project", backref="briefing_requests"
+    )

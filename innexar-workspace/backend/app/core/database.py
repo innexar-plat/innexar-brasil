@@ -1,6 +1,7 @@
 """Async database engine and session factory."""
-from collections.abc import AsyncGenerator
+
 import logging
+from collections.abc import AsyncGenerator
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -57,18 +58,14 @@ async def ensure_mp_subscription_schema() -> None:
                 "ON billing_subscriptions (external_id)"
             )
         )
-        await conn.execute(
-            text(
-                """
+        await conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS billing_mp_subscription_checkouts (
                     id SERIAL PRIMARY KEY,
                     invoice_id INTEGER NOT NULL REFERENCES billing_invoices(id),
                     mp_plan_id VARCHAR(255) NOT NULL,
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
                 )
-                """
-            )
-        )
+                """))
         await conn.execute(
             text(
                 "CREATE INDEX IF NOT EXISTS ix_billing_mp_subscription_checkouts_invoice_id "

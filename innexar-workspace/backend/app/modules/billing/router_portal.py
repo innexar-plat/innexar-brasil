@@ -1,13 +1,10 @@
 """Portal billing routes: list invoices, pay, download (print-friendly HTML)."""
+
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
-
-from app.core.debug_log import debug_log
-
-logger = logging.getLogger(__name__)
 from fastapi.responses import HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,17 +12,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth_customer import get_current_customer
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal, get_db
+from app.core.debug_log import debug_log
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
 from app.modules.billing.dependencies import require_billing_enabled
 from app.modules.billing.enums import InvoiceStatus
 from app.modules.billing.models import Invoice, Subscription
+from app.modules.billing.overdue import reactivate_subscription_after_payment
 from app.modules.billing.provisioning import trigger_provisioning_if_needed
 from app.modules.billing.schemas import InvoiceResponse, PayRequest, PayResponse
 from app.modules.billing.service import _get_payment_provider, create_payment_attempt
-from app.modules.billing.overdue import reactivate_subscription_after_payment
 from app.modules.notifications.service import create_notification_and_maybe_send_email
 from app.providers.payments.mercadopago import MercadoPagoProvider
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["portal-billing"])
 ORG_ID = "innexar"
@@ -53,7 +53,12 @@ async def _parse_pay_body(request: Request) -> PayRequest:
         )
         return out
     except Exception as e:
-        debug_log("router_portal._parse_pay_body", "Parse exception", {"type": type(e).__name__}, "A")
+        debug_log(
+            "router_portal._parse_pay_body",
+            "Parse exception",
+            {"type": type(e).__name__},
+            "A",
+        )
         return PayRequest()
     # #endregion
 
@@ -80,7 +85,11 @@ async def list_my_invoices(
     current: Annotated[CustomerUser, Depends(get_current_customer)],
     _: Annotated[None, Depends(require_billing_enabled)],
 ):
-    q = select(Invoice).where(Invoice.customer_id == current.customer_id).order_by(Invoice.id.desc())
+    q = (
+        select(Invoice)
+        .where(Invoice.customer_id == current.customer_id)
+        .order_by(Invoice.id.desc())
+    )
     r = await db.execute(q)
     return [_invoice_to_response(inv) for inv in r.scalars().all()]
 
@@ -124,7 +133,11 @@ async def pay_invoice(
     debug_log(
         "router_portal.pay_invoice",
         "Invoice fetch",
-        {"invoice_id": invoice_id, "found": inv is not None, "status": getattr(inv, "status", None)},
+        {
+            "invoice_id": invoice_id,
+            "found": inv is not None,
+            "status": getattr(inv, "status", None),
+        },
         "B",
     )
     # #endregion
@@ -135,9 +148,7 @@ async def pay_invoice(
 
     # Bricks: pay with card/Pix token inline (same flow as checkout)
     if payload.payment_method_id:
-        return await _pay_invoice_bricks(
-            db, background_tasks, inv, current, payload
-        )
+        return await _pay_invoice_bricks(db, background_tasks, inv, current, payload)
 
     # Checkout Pro: use body URLs or defaults so portal can POST with empty body or no body
     base = (
@@ -179,14 +190,20 @@ async def pay_invoice(
             raise HTTPException(
                 status_code=503,
                 detail="Pagamento temporariamente indisponível. Verifique a configuração do Mercado Pago (token e permissões) no servidor.",
-            )
-        raise HTTPException(status_code=400, detail=detail)
+            ) from e
+        raise HTTPException(status_code=400, detail=detail) from e
     from app.modules.billing.models import PaymentAttempt
+
     r2 = await db.execute(
-        select(PaymentAttempt).where(PaymentAttempt.invoice_id == invoice_id).order_by(PaymentAttempt.id.desc()).limit(1)
+        select(PaymentAttempt)
+        .where(PaymentAttempt.invoice_id == invoice_id)
+        .order_by(PaymentAttempt.id.desc())
+        .limit(1)
     )
     attempt = r2.scalar_one_or_none()
-    return PayResponse(payment_url=res.payment_url, attempt_id=attempt.id if attempt else 0)
+    return PayResponse(
+        payment_url=res.payment_url, attempt_id=attempt.id if attempt else 0
+    )
 
 
 async def _pay_invoice_bricks(
@@ -206,9 +223,15 @@ async def _pay_invoice_bricks(
         )
     payer_email = (body.payer_email or current.email or "").lower().strip()
     if not payer_email:
-        raise HTTPException(status_code=400, detail="payer_email or login email required")
+        raise HTTPException(
+            status_code=400, detail="payer_email or login email required"
+        )
 
-    cust = (await db.execute(select(Customer).where(Customer.id == inv.customer_id).limit(1))).scalar_one_or_none()
+    cust = (
+        await db.execute(
+            select(Customer).where(Customer.id == inv.customer_id).limit(1)
+        )
+    ).scalar_one_or_none()
     if cust and not cust.mp_customer_id:
         try:
             mp_customer = provider.create_or_get_customer(
@@ -236,7 +259,7 @@ async def _pay_invoice_bricks(
             external_reference=str(inv.id),
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     payment_status = (payment.get("status") or "").lower()
     payment_id = str(payment.get("id", ""))
@@ -244,10 +267,12 @@ async def _pay_invoice_bricks(
     inv.external_id = payment_id
     if payment_status == "approved":
         inv.status = InvoiceStatus.PAID.value
-        inv.paid_at = datetime.now(timezone.utc)
+        inv.paid_at = datetime.now(UTC)
         if inv.subscription_id:
             sub_r = await db.execute(
-                select(Subscription).where(Subscription.id == inv.subscription_id).limit(1)
+                select(Subscription)
+                .where(Subscription.id == inv.subscription_id)
+                .limit(1)
             )
             sub = sub_r.scalar_one_or_none()
             if sub:
@@ -261,6 +286,7 @@ async def _pay_invoice_bricks(
                     await session.commit()
                 except Exception:
                     await session.rollback()
+
         background_tasks.add_task(_run_provisioning, inv.id)
 
         await create_notification_and_maybe_send_email(
@@ -288,7 +314,9 @@ async def _pay_invoice_bricks(
             "cc_rejected_insufficient_amount": "Saldo insuficiente.",
             "cc_rejected_other_reason": "Pagamento recusado. Tente outro cartão.",
         }
-        error_message = error_messages.get(status_detail, "Pagamento recusado. Verifique os dados e tente novamente.")
+        error_message = error_messages.get(
+            status_detail, "Pagamento recusado. Verifique os dados e tente novamente."
+        )
 
     poi = payment.get("point_of_interaction", {}) or {}
     tx_data = poi.get("transaction_data", {}) or {}

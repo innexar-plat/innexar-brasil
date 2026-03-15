@@ -1,4 +1,5 @@
 """Pydantic schemas for workspace customers."""
+
 from datetime import datetime
 from typing import Any
 

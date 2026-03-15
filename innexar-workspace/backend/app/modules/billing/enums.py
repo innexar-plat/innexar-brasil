@@ -1,8 +1,9 @@
 """Billing enums for Invoice and Subscription state machines."""
+
 import enum
 
 
-class InvoiceStatus(str, enum.Enum):
+class InvoiceStatus(enum.StrEnum):
     DRAFT = "draft"
     ISSUED = "issued"
     PENDING = "pending"
@@ -12,7 +13,7 @@ class InvoiceStatus(str, enum.Enum):
     EXPIRED = "expired"
 
 
-class SubscriptionStatus(str, enum.Enum):
+class SubscriptionStatus(enum.StrEnum):
     INACTIVE = "inactive"
     ACTIVE = "active"
     OVERDUE = "overdue"
@@ -20,6 +21,6 @@ class SubscriptionStatus(str, enum.Enum):
     CANCELED = "canceled"
 
 
-class PaymentProvider(str, enum.Enum):
+class PaymentProvider(enum.StrEnum):
     STRIPE = "stripe"
     MERCADOPAGO = "mercadopago"

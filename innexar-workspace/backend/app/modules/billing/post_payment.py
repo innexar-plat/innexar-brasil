@@ -1,5 +1,6 @@
 """Post-payment actions: create project for site products and notify team."""
-from datetime import datetime, timedelta, timezone
+
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +23,9 @@ def _is_site_product(product: Product) -> bool:
     return "site" in (product.name or "").lower()
 
 
-async def create_project_and_notify_after_payment(db: AsyncSession, invoice_id: int) -> None:
+async def create_project_and_notify_after_payment(
+    db: AsyncSession, invoice_id: int
+) -> None:
     """
     After payment: if invoice is for a site product, create Project (aguardando_briefing)
     and notify staff. Idempotent: skips if project already exists for this subscription.
@@ -55,7 +58,9 @@ async def create_project_and_notify_after_payment(db: AsyncSession, invoice_id: 
         return
 
     customer = invoice.customer
-    project_name = f"Site {customer.name}" if customer else f"Site (pedido #{invoice_id})"
+    project_name = (
+        f"Site {customer.name}" if customer else f"Site (pedido #{invoice_id})"
+    )
 
     expected_delivery_at: datetime | None = None
     # Optional: from product metadata or line_items (e.g. delivery_hours)
@@ -66,7 +71,7 @@ async def create_project_and_notify_after_payment(db: AsyncSession, invoice_id: 
             first = items[0] if isinstance(items[0], dict) else None
             if first and isinstance(first.get("delivery_hours"), (int, float)):
                 hours = int(first.get("delivery_hours", 48))
-                expected_delivery_at = datetime.now(timezone.utc) + timedelta(hours=hours)
+                expected_delivery_at = datetime.now(UTC) + timedelta(hours=hours)
 
     project = Project(
         org_id=invoice.customer.org_id if customer else "innexar",

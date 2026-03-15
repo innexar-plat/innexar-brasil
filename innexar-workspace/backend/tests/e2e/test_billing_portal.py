@@ -1,18 +1,20 @@
 """E2E: portal invoices list, pay, and dashboard (requires billing module)."""
-from datetime import datetime, timezone
+
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
 from app.modules.billing.schemas import PayResponse
 from app.modules.billing.service import create_manual_invoice
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def _customer_login(client: AsyncClient, email: str, password: str = "customer-secret") -> str:
+async def _customer_login(
+    client: AsyncClient, email: str, password: str = "customer-secret"
+) -> str:
     """Helper: POST login and return access_token."""
     r = await client.post(
         "/api/public/auth/customer/login",
@@ -55,7 +57,7 @@ async def test_portal_pay_with_bricks_mock_returns_200_and_payload_structure(
     inv = await create_manual_invoice(
         override_get_db,
         customer_id=customer.id,
-        due_date=datetime.now(timezone.utc),
+        due_date=datetime.now(UTC),
         total=75.0,
         currency="BRL",
     )
@@ -102,7 +104,9 @@ async def test_portal_invoices_list_empty(
     )
     assert login.status_code == 200
     token = login.json()["access_token"]
-    r = await client.get("/api/portal/invoices", headers={"Authorization": f"Bearer {token}"})
+    r = await client.get(
+        "/api/portal/invoices", headers={"Authorization": f"Bearer {token}"}
+    )
     assert r.status_code == 200
     data = r.json()
     assert isinstance(data, list)
@@ -125,7 +129,10 @@ async def test_portal_invoices_pay_404(
     token = login.json()["access_token"]
     r = await client.post(
         "/api/portal/invoices/999/pay",
-        json={"success_url": "https://example.com/ok", "cancel_url": "https://example.com/cancel"},
+        json={
+            "success_url": "https://example.com/ok",
+            "cancel_url": "https://example.com/cancel",
+        },
         headers={"Authorization": f"Bearer {token}"},
     )
     assert r.status_code == 404

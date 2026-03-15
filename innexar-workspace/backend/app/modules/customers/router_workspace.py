@@ -1,4 +1,5 @@
 """Workspace routes: list/create/update/delete customers, send portal credentials, generate password."""
+
 import secrets
 from typing import Annotated
 
@@ -14,7 +15,12 @@ from app.core.security import hash_password
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
 from app.models.user import User
-from app.modules.billing.models import Invoice, ProvisioningJob, ProvisioningRecord, Subscription
+from app.modules.billing.models import (
+    Invoice,
+    ProvisioningJob,
+    ProvisioningRecord,
+    Subscription,
+)
 from app.modules.customers.schemas import (
     CustomerCreate,
     CustomerResponse,
@@ -49,12 +55,13 @@ async def list_customers(
 ):
     """List all customers. has_portal_access is true when at least one CustomerUser exists."""
     r = await db.execute(
-        select(Customer).options(selectinload(Customer.users)).order_by(Customer.id.desc())
+        select(Customer)
+        .options(selectinload(Customer.users))
+        .order_by(Customer.id.desc())
     )
     customers = list(r.scalars().unique().all())
     return [
-        _customer_to_response(c, has_portal_access=len(c.users) > 0)
-        for c in customers
+        _customer_to_response(c, has_portal_access=len(c.users) > 0) for c in customers
     ]
 
 
@@ -127,7 +134,9 @@ async def update_customer(
         email_lower = body.email.lower().strip()
         existing = (
             await db.execute(
-                select(Customer).where(Customer.email == email_lower, Customer.id != customer_id).limit(1)
+                select(Customer)
+                .where(Customer.email == email_lower, Customer.id != customer_id)
+                .limit(1)
             )
         ).scalar_one_or_none()
         if existing:
@@ -158,9 +167,7 @@ async def cleanup_test_customers(
         Customer.name == "Acme Corp",
     )
     not_toufic = ~Customer.name.like(f"%{keep_name}%")
-    r = await db.execute(
-        select(Customer.id).where(and_(is_test, not_toufic))
-    )
+    r = await db.execute(select(Customer.id).where(and_(is_test, not_toufic)))
     ids_to_delete = [row[0] for row in r.scalars().all()]
     deleted = 0
     for customer_id in ids_to_delete:
@@ -168,45 +175,71 @@ async def cleanup_test_customers(
             s[0]
             for s in (
                 await db.execute(
-                    select(Subscription.id).where(Subscription.customer_id == customer_id)
+                    select(Subscription.id).where(
+                        Subscription.customer_id == customer_id
+                    )
                 )
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
         ]
         for j in (
-            await db.execute(
-                select(ProvisioningJob).where(
-                    ProvisioningJob.subscription_id.in_(sub_ids)
+            (
+                await db.execute(
+                    select(ProvisioningJob).where(
+                        ProvisioningJob.subscription_id.in_(sub_ids)
+                    )
                 )
             )
-        ).scalars().all():
+            .scalars()
+            .all()
+        ):
             await db.delete(j)
         for inv in (
-            await db.execute(
-                select(Invoice).where(Invoice.customer_id == customer_id)
-            )
-        ).scalars().all():
-            await db.delete(inv)
-        for rec in (
-            await db.execute(
-                select(ProvisioningRecord).where(
-                    ProvisioningRecord.subscription_id.in_(sub_ids)
+            (
+                await db.execute(
+                    select(Invoice).where(Invoice.customer_id == customer_id)
                 )
             )
-        ).scalars().all():
+            .scalars()
+            .all()
+        ):
+            await db.delete(inv)
+        for rec in (
+            (
+                await db.execute(
+                    select(ProvisioningRecord).where(
+                        ProvisioningRecord.subscription_id.in_(sub_ids)
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        ):
             await db.delete(rec)
         for sub in (
-            await db.execute(
-                select(Subscription).where(Subscription.customer_id == customer_id)
+            (
+                await db.execute(
+                    select(Subscription).where(Subscription.customer_id == customer_id)
+                )
             )
-        ).scalars().all():
+            .scalars()
+            .all()
+        ):
             await db.delete(sub)
         for cu in (
-            await db.execute(
-                select(CustomerUser).where(CustomerUser.customer_id == customer_id)
+            (
+                await db.execute(
+                    select(CustomerUser).where(CustomerUser.customer_id == customer_id)
+                )
             )
-        ).scalars().all():
+            .scalars()
+            .all()
+        ):
             await db.delete(cu)
-        cust = (await db.execute(select(Customer).where(Customer.id == customer_id))).scalar_one_or_none()
+        cust = (
+            await db.execute(select(Customer).where(Customer.id == customer_id))
+        ).scalar_one_or_none()
         if cust:
             await db.delete(cust)
             deleted += 1
@@ -221,11 +254,7 @@ async def delete_customer(
     _: Annotated[User, Depends(RequirePermission("billing:write"))],
 ):
     """Delete customer and related data: invoices, subscriptions, portal user."""
-    r = await db.execute(
-        select(Customer)
-        .where(Customer.id == customer_id)
-        .limit(1)
-    )
+    r = await db.execute(select(Customer).where(Customer.id == customer_id).limit(1))
     customer = r.scalar_one_or_none()
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -236,34 +265,60 @@ async def delete_customer(
             await db.execute(
                 select(Subscription.id).where(Subscription.customer_id == customer_id)
             )
-        ).scalars().all()
+        )
+        .scalars()
+        .all()
     ]
 
     for j in (
-        await db.execute(
-            select(ProvisioningJob).where(ProvisioningJob.subscription_id.in_(sub_ids))
-        )
-    ).scalars().all():
-        await db.delete(j)
-    for inv in (
-        await db.execute(select(Invoice).where(Invoice.customer_id == customer_id))
-    ).scalars().all():
-        await db.delete(inv)
-    for rec in (
-        await db.execute(
-            select(ProvisioningRecord).where(
-                ProvisioningRecord.subscription_id.in_(sub_ids)
+        (
+            await db.execute(
+                select(ProvisioningJob).where(
+                    ProvisioningJob.subscription_id.in_(sub_ids)
+                )
             )
         )
-    ).scalars().all():
+        .scalars()
+        .all()
+    ):
+        await db.delete(j)
+    for inv in (
+        (await db.execute(select(Invoice).where(Invoice.customer_id == customer_id)))
+        .scalars()
+        .all()
+    ):
+        await db.delete(inv)
+    for rec in (
+        (
+            await db.execute(
+                select(ProvisioningRecord).where(
+                    ProvisioningRecord.subscription_id.in_(sub_ids)
+                )
+            )
+        )
+        .scalars()
+        .all()
+    ):
         await db.delete(rec)
     for sub in (
-        await db.execute(select(Subscription).where(Subscription.customer_id == customer_id))
-    ).scalars().all():
+        (
+            await db.execute(
+                select(Subscription).where(Subscription.customer_id == customer_id)
+            )
+        )
+        .scalars()
+        .all()
+    ):
         await db.delete(sub)
     for cu in (
-        await db.execute(select(CustomerUser).where(CustomerUser.customer_id == customer_id))
-    ).scalars().all():
+        (
+            await db.execute(
+                select(CustomerUser).where(CustomerUser.customer_id == customer_id)
+            )
+        )
+        .scalars()
+        .all()
+    ):
         await db.delete(cu)
     await db.delete(customer)
     await db.flush()
@@ -316,11 +371,14 @@ async def _send_credentials_email(
 ) -> None:
     """Send email with portal URL, login and password. Uses new DB session for provider lookup."""
     from app.core.database import AsyncSessionLocal
-
     from app.modules.customers.email_templates import portal_credentials_email
 
     portal_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000").rstrip("/")
-    login_url = f"{portal_url}/pt/login" if "portal." in portal_url else f"{portal_url}/portal/login"
+    login_url = (
+        f"{portal_url}/pt/login"
+        if "portal." in portal_url
+        else f"{portal_url}/portal/login"
+    )
     subject, body_plain, body_html = portal_credentials_email(
         login_url=login_url,
         recipient_email=recipient_email,

@@ -1,4 +1,5 @@
 """MinIO S3-compatible storage backend."""
+
 import asyncio
 import io
 from typing import BinaryIO
@@ -11,11 +12,13 @@ def _get_client():
     try:
         from minio import Minio
     except ImportError:
-        raise RuntimeError(
-            "minio package not installed. pip install minio"
-        ) from None
+        raise RuntimeError("minio package not installed. pip install minio") from None
     secure = getattr(settings, "MINIO_SECURE", False)
-    endpoint = settings.MINIO_ENDPOINT.replace("http://", "").replace("https://", "").split("/")[0]
+    endpoint = (
+        settings.MINIO_ENDPOINT.replace("http://", "")
+        .replace("https://", "")
+        .split("/")[0]
+    )
     return Minio(
         endpoint,
         access_key=settings.MINIO_ACCESS_KEY,
@@ -42,7 +45,9 @@ class MinIOBackend:
         if not exists:
             await asyncio.to_thread(_make)
 
-    async def put(self, key: str, body: BinaryIO | bytes, content_type: str | None = None) -> None:
+    async def put(
+        self, key: str, body: BinaryIO | bytes, content_type: str | None = None
+    ) -> None:
         await self.ensure_bucket_exists()
         data = body.read() if hasattr(body, "read") else body
         length = len(data) if isinstance(data, bytes) else 0
@@ -71,7 +76,9 @@ class MinIOBackend:
         await self.ensure_bucket_exists()
 
         def _list() -> list[str]:
-            objects = self._client.list_objects(self._bucket, prefix=prefix, recursive=True)
+            objects = self._client.list_objects(
+                self._bucket, prefix=prefix, recursive=True
+            )
             return [obj.object_name for obj in objects]
 
         return await asyncio.to_thread(_list)

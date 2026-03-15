@@ -1,10 +1,9 @@
 """E2E: POST /api/public/auth/customer/login and GET /api/portal/me."""
-import pytest
-import pytest_asyncio
-from httpx import AsyncClient
 
+import pytest
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio

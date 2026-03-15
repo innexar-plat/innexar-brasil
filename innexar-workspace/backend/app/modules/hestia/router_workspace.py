@@ -1,4 +1,5 @@
 """Workspace Hestia management: users, domains, packages, overview."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException

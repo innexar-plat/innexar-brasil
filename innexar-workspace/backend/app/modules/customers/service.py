@@ -1,5 +1,8 @@
 """Customer service: send portal credentials (e.g. after first payment)."""
+
 import secrets
+
+from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
@@ -8,10 +11,11 @@ from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
 from app.modules.customers.email_templates import portal_credentials_email
 from app.providers.email.loader import get_email_provider
-from sqlalchemy import select
 
 
-async def send_portal_credentials_after_payment(customer_id: int, org_id: str = "innexar") -> None:
+async def send_portal_credentials_after_payment(
+    customer_id: int, org_id: str = "innexar"
+) -> None:
     """Create or update CustomerUser with temp password and send email with portal URL and credentials. Call from background task (e.g. after webhook marks invoice paid)."""
     async with AsyncSessionLocal() as db:
         try:
@@ -23,7 +27,9 @@ async def send_portal_credentials_after_payment(customer_id: int, org_id: str = 
                 return
             email = customer.email
             cu_r = await db.execute(
-                select(CustomerUser).where(CustomerUser.customer_id == customer_id).limit(1)
+                select(CustomerUser)
+                .where(CustomerUser.customer_id == customer_id)
+                .limit(1)
             )
             cu = cu_r.scalar_one_or_none()
             temporary_password = secrets.token_urlsafe(12)
@@ -40,9 +46,19 @@ async def send_portal_credentials_after_payment(customer_id: int, org_id: str = 
                 db.add(cu)
                 await db.flush()
             await db.commit()
-            portal_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000").rstrip("/")
-            login_url = f"{portal_url}/pt/login" if "portal." in portal_url else f"{portal_url}/portal/login"
-            briefing_url = f"{portal_url}/pt/site-briefing" if "portal." in portal_url else f"{portal_url}/portal/site-briefing"
+            portal_url = getattr(
+                settings, "FRONTEND_URL", "http://localhost:3000"
+            ).rstrip("/")
+            login_url = (
+                f"{portal_url}/pt/login"
+                if "portal." in portal_url
+                else f"{portal_url}/portal/login"
+            )
+            briefing_url = (
+                f"{portal_url}/pt/site-briefing"
+                if "portal." in portal_url
+                else f"{portal_url}/portal/site-briefing"
+            )
             subject, body_plain, body_html = portal_credentials_email(
                 login_url=login_url,
                 recipient_email=email,
