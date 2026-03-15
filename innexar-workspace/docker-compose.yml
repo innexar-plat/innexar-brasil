@@ -44,26 +44,20 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
-    volumes:
-      - ./backend/app:/app/app
-      - ./backend/scripts:/app/scripts
-      - ./backend/tests:/app/tests
-      - ./backend/alembic:/app/alembic
-      - ../innexar-workspace-app/.cursor:/cursor-debug-logs
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-workspace_user}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-innexar_workspace}
+      ENVIRONMENT: production
+      PYTHONUNBUFFERED: 1
       SECRET_KEY_STAFF: ${SECRET_KEY_STAFF:-change-me-staff}
       SECRET_KEY_CUSTOMER: ${SECRET_KEY_CUSTOMER:-change-me-customer}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://innexar.com.br,https://www.innexar.com.br,http://localhost:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://innexar.com.br,https://www.innexar.com.br,https://portal.innexar.com.br,https://app.innexar.com.br}
       FRONTEND_URL: ${FRONTEND_URL:-https://innexar.com.br}
+      PORTAL_URL: ${PORTAL_URL:-https://portal.innexar.com.br}
       SEED_TOKEN: ${SEED_TOKEN:-}
       MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-${MERCADOPAGO_ACCESS_TOKEN:-}}
       MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-${MP_ACCESS_TOKEN:-}}
       MP_PUBLIC_KEY: ${MP_PUBLIC_KEY:-}
       MP_WEBHOOK_SECRET: ${MP_WEBHOOK_SECRET:-}
-      PORTAL_URL: ${PORTAL_URL:-}
-      DEBUG_LOG_PATH: /cursor-debug-logs/debug-712011.log
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
@@ -74,6 +68,14 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
       MINIO_BUCKET_PROJECTS: ${MINIO_BUCKET_PROJECTS:-project-files}
+      DEPLOY_BOOTSTRAP_ENABLED: ${DEPLOY_BOOTSTRAP_ENABLED:-1}
+      DEPLOY_BOOTSTRAP_ADMIN: ${DEPLOY_BOOTSTRAP_ADMIN:-1}
+      DEPLOY_BOOTSTRAP_SEEDS: ${DEPLOY_BOOTSTRAP_SEEDS:-1}
+      DEPLOY_BOOTSTRAP_HESTIA: ${DEPLOY_BOOTSTRAP_HESTIA:-1}
+      DEPLOY_ADMIN_EMAIL: ${DEPLOY_ADMIN_EMAIL:-admin@innexar.com.br}
+      DEPLOY_ADMIN_PASSWORD: ${DEPLOY_ADMIN_PASSWORD:-Innexar@2026}
+      DB_STARTUP_MAX_ATTEMPTS: ${DB_STARTUP_MAX_ATTEMPTS:-24}
+      DB_STARTUP_RETRY_DELAY_SECONDS: ${DB_STARTUP_RETRY_DELAY_SECONDS:-5}
     ports:
       - "8001:8000"
     networks:
