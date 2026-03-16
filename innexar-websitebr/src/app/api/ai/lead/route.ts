@@ -5,7 +5,7 @@ const WORKSPACE_API_URL = (process.env.NEXT_PUBLIC_WORKSPACE_API_URL || process.
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
-        const { name, email, phone, interest, conversation_summary, language } = body
+        const { name, email, phone, interest, conversation_summary } = body
 
         if (!name || !email) {
             return NextResponse.json(

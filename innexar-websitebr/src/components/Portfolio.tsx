@@ -179,6 +179,8 @@ const Portfolio = () => {
               <div className="relative overflow-hidden h-64">
                 {/* Background Image with Gradient Overlay */}
                 <div className="absolute inset-0">
+                  {/* next/image incompatible here: onError uses innerHTML DOM mutation for gradient fallback */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={project.image}
                     alt={project.title}

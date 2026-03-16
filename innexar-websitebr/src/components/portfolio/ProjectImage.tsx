@@ -10,11 +10,11 @@ interface ProjectImageProps {
   category: string
 }
 
-export default function ProjectImage({ gradient, icon: Icon, iconColor, title, category }: ProjectImageProps) {
+export default function ProjectImage({ gradient, icon: Icon, iconColor, category }: ProjectImageProps) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
+    setTimeout(() => setMounted(true), 0)
   }, [])
 
   if (!mounted) {

@@ -4,7 +4,6 @@ import type { ComponentType, SVGProps } from 'react'
 import { motion } from 'framer-motion'
 import {
   SparklesIcon,
-  CubeTransparentIcon,
   DevicePhoneMobileIcon,
   BoltIcon,
   CloudIcon,
@@ -14,7 +13,6 @@ import { useTranslations } from 'next-intl'
 
 const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   web: SparklesIcon,
-  saas: CubeTransparentIcon,
   mobile: DevicePhoneMobileIcon,
   ai: BoltIcon,
   cloud: CloudIcon,
@@ -31,7 +29,7 @@ const Services = () => {
       description: string
       results: string[]
       tag: string
-    }[]) ?? []
+    }[])?.filter((item) => item.key !== 'saas') ?? []
 
   return (
     <section id="services" className="relative py-24 bg-slate-950 text-white">

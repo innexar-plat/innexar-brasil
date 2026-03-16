@@ -25,7 +25,7 @@ async function createSave50Coupon() {
             console.log(`- Currency: ${existingCoupon.currency}`)
             console.log(`- Duration: ${existingCoupon.duration}`)
             return
-        } catch (e) {
+        } catch {
             // Coupon doesn't exist, create it
             console.log('Creating SAVE50 coupon...')
         }

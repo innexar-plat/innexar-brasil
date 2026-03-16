@@ -240,11 +240,11 @@ export default function CriarSiteCheckoutPage() {
             },
           },
           callbacks: {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             onReady: () => {
               setBrickReady(true);
             },
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             onSubmit: async (param: { formData?: Record<string, unknown>; [key: string]: unknown }) => {
               const data = param.formData ?? param;
               await handleBrickSubmit(data);

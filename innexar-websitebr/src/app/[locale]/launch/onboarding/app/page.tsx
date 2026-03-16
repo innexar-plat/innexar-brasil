@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { motion } from 'framer-motion'
 import { useSearchParams } from 'next/navigation'
 import { Smartphone, Rocket, ArrowLeft } from 'lucide-react'
 import { Link } from '@/i18n/navigation'

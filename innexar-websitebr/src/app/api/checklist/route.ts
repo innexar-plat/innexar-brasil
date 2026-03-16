@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendEmail, createTransporter } from '@/lib/email'
+import { sendEmail } from '@/lib/email'
 import { sendEmailResend, isResendConfigured } from '@/lib/email-resend'
 import { sendEmailOAuth2, isOAuth2Configured } from '@/lib/email-oauth2'
 import { getChecklistEmailTemplate, getChecklistAutoReplyTemplate } from '@/lib/email-templates'
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       { message: 'Checklist enviado com sucesso!' },
       { status: 200 }
     )
-  } catch (error: any) {
+  } catch (error) {
     console.error('Erro ao processar checklist:', error)
     return NextResponse.json(
       { error: 'Erro ao enviar checklist. Tente novamente mais tarde.' },

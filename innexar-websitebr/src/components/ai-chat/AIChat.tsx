@@ -88,7 +88,7 @@ const AIChat = () => {
         timestamp: new Date()
       }])
     }
-  }, [isOpen, locale])
+  }, [isOpen, locale, messages.length])
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return

@@ -14,7 +14,8 @@ export async function generateMetadata(
   const description = t(`${page}.description`, { defaultValue: t('default.description') })
   const keywords = t(`${page}.keywords`, { defaultValue: t('default.keywords') })
 
-  const cleanPath = page === 'home' ? '' : `/${page}`
+  const normalizedPage = page === 'default' ? 'home' : page
+  const cleanPath = normalizedPage === 'home' ? '' : `/${normalizedPage}`
   const url = `${SITE_URL}/${locale}${cleanPath}`
   const ogImageByPage: Record<string, string> = {
     home: 'og-image.jpg',
@@ -22,7 +23,7 @@ export async function generateMetadata(
     'prospector-ai': 'og-prospector-ai.jpg',
     services: 'og-services.jpg',
   }
-  const ogImage = `${SITE_URL}/${ogImageByPage[page] || 'og-image.jpg'}`
+  const ogImage = `${SITE_URL}/${ogImageByPage[normalizedPage] || 'og-image.jpg'}`
   const ogLocale = locale === 'pt' ? 'pt_BR' : locale === 'es' ? 'es_ES' : 'en_US'
   const ogAlternateLocales = (['pt', 'en', 'es'] as const).filter((l) => l !== locale).map((l) => (l === 'pt' ? 'pt_BR' : l === 'es' ? 'es_ES' : 'en_US'))
 

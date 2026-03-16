@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { useSearchParams } from 'next/navigation'
 import {
-    CheckCircle2, Clock, Palette, Send, Eye, Rocket,
+    CheckCircle2, Clock, Palette, Eye, Rocket,
     MessageSquare, FileText, Calendar, ExternalLink, ArrowRight,
     Sparkles, Shield, Phone, Mail, AlertCircle, RefreshCw
 } from 'lucide-react'
@@ -86,7 +86,6 @@ function DashboardContent() {
             // If no URL params, try localStorage (logged-in customer)
             if (!currentOrderId || !currentEmail) {
                 const token = localStorage.getItem('customer_token')
-                const storedEmail = localStorage.getItem('customer_email')
 
                 if (token) {
                     try {
@@ -125,8 +124,8 @@ function DashboardContent() {
                         : errorData?.error || errorData?.detail || errorData?.message || 'Order not found. Please check your link or contact support.'
                     setError(errorMsg)
                 }
-            } catch (err: any) {
-                const errorMsg = err?.message || (typeof err === 'string' ? err : 'Unable to load order. Please try again later.')
+            } catch (err) {
+                const errorMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : 'Unable to load order. Please try again later.')
                 setError(errorMsg)
             } finally {
                 setLoading(false)

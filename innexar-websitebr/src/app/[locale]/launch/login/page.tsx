@@ -3,19 +3,17 @@
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { motion } from "framer-motion";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { Mail, Lock, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
     const t = useTranslations("auth.login");
-    const router = useRouter();
     const locale = useLocale();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [needsVerification, setNeedsVerification] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,8 +45,8 @@ export default function LoginPage() {
               process.env.NEXT_PUBLIC_PORTAL_URL ||
               "https://portal.innexar.com.br";
             window.location.href = `${portalUrl}/${locale}`;
-        } catch (err: any) {
-            setError(err.message || t("error.generic"));
+        } catch (err) {
+            setError(err instanceof Error ? err.message : t("error.generic"));
         } finally {
             setLoading(false);
         }

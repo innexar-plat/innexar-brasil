@@ -10,7 +10,7 @@ export interface SiteConfig {
     sales_email?: string;
     support_email?: string;
     company_name?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 interface SiteConfigContextType {

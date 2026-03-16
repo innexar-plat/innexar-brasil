@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   robots: {
@@ -12,6 +11,10 @@ export const metadata: Metadata = {
   },
 }
 
-export default function PortfolioPage() {
-  redirect('/')
+export default function TemplatePreviewLayout({
+  children,
+}: {
+  readonly children: React.ReactNode
+}) {
+  return children
 }

@@ -11,7 +11,7 @@ interface StructuredDataServicesProps {
   services: ServiceItem[]
 }
 
-export default function StructuredDataServices({ baseUrl, locale, services }: StructuredDataServicesProps) {
+export default function StructuredDataServices({ baseUrl, services }: StructuredDataServicesProps) {
   if (services.length === 0) return null
 
   const schema = {

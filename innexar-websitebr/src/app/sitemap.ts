@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://innexar.com.br'
 const locales = ['pt', 'en', 'es']
-// Only include URLs that render content (exclude redirects: portfolio, saas, launch → home or external)
+// Include only pages that render first-party content.
 const pages = [
   '',
   'about',
@@ -26,7 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         url: `${SITE_URL}/${locale}${page ? `/${page}` : ''}`,
         lastModified: new Date(),
         changeFrequency: page === '' ? 'daily' : 'weekly',
-        priority: page === '' ? 1.0 : page.startsWith('saas') ? 0.9 : 0.8,
+        priority: page === '' ? 1.0 : 0.8,
         alternates: {
           languages: {
             'x-default': `${SITE_URL}/pt${page ? `/${page}` : ''}`,

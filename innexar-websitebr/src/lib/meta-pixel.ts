@@ -45,10 +45,13 @@ export function initMetaPixel(pixelId?: string): void {
     const e = 'script'
 
     if (!f.fbq) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const n: any = f.fbq = function (...args: unknown[]) {
-            n.callMethod ?
-                n.callMethod.apply(n, args) :
+            if (n.callMethod) {
+                n.callMethod(...args)
+            } else {
                 n.queue.push(args)
+            }
         }
 
         if (!f._fbq) f._fbq = n

@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { Mail, ArrowRight, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 export default function VerifyEmailPage() {
   const t = useTranslations("auth.verifyEmail");
-  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const email = searchParams.get("email");
@@ -42,8 +41,8 @@ export default function VerifyEmailPage() {
       }
 
       setVerified(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to verify email");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to verify email");
     } finally {
       setLoading(false);
     }
@@ -68,8 +67,8 @@ export default function VerifyEmailPage() {
       }
 
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setResending(false);
     }

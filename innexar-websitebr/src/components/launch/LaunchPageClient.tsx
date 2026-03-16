@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
-    Check, Sparkles, Rocket, Clock, Shield, Plus, Minus,
-    Star, Quote, ChevronRight, Zap, Palette, Search, MessageCircle,
-    Users, Award, Globe, ArrowRight, Phone, Play
+    Check, Sparkles, Rocket, Clock, Shield, Plus,
+    Star, Quote, Zap, Palette, Search, MessageCircle,
+    Award, Globe, ArrowRight, Phone, Play
 } from 'lucide-react'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { MetaPixel } from '@/lib/meta-pixel'
 import Header from '@/components/Header'
@@ -77,7 +78,7 @@ export default function LaunchPageClient() {
     const [isCheckingOut, setIsCheckingOut] = useState(false)
 
     useEffect(() => {
-        setIsLoaded(true)
+        setTimeout(() => setIsLoaded(true), 0)
         MetaPixel.viewContent({
             content_name: 'Website Launch Landing Page',
             content_category: 'Website Services',
@@ -365,7 +366,7 @@ export default function LaunchPageClient() {
                             Customer Reviews
                         </span>
                         <h2 className="text-4xl md:text-5xl font-bold mb-4">What Our Clients Say</h2>
-                        <p className="text-slate-400 max-w-2xl mx-auto">Don't just take our word for it. Here's what business owners like you are saying about our work.</p>
+                        <p className="text-slate-400 max-w-2xl mx-auto">Don&apos;t just take our word for it. Here&apos;s what business owners like you are saying about our work.</p>
                     </motion.div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -384,7 +385,7 @@ export default function LaunchPageClient() {
                                         <Star key={j} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                     ))}
                                 </div>
-                                <p className="text-slate-300 mb-6 leading-relaxed">"{review.text}"</p>
+                                <p className="text-slate-300 mb-6 leading-relaxed">&quot;{review.text}&quot;</p>
                                 <div className="flex items-center gap-3 pt-4 border-t border-white/10">
                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center font-bold text-sm">
                                         {review.name.split(' ').map(n => n[0]).join('')}
@@ -640,9 +641,9 @@ export default function LaunchPageClient() {
                             <span className="font-bold text-lg">Innexar</span>
                         </div>
                         <div className="flex items-center gap-6 text-sm text-slate-400">
-                            <a href="/terms-of-service" className="hover:text-white transition-colors text-slate-400 no-underline">Terms</a>
-                            <a href="/privacy-policy" className="hover:text-white transition-colors text-slate-400 no-underline">Privacy</a>
-                            <a href="/contact" className="hover:text-white transition-colors text-slate-400 no-underline">Contact</a>
+                            <Link href="/terms-of-service" className="hover:text-white transition-colors text-slate-400 no-underline">Terms</Link>
+                            <Link href="/privacy-policy" className="hover:text-white transition-colors text-slate-400 no-underline">Privacy</Link>
+                            <Link href="/contact" className="hover:text-white transition-colors text-slate-400 no-underline">Contact</Link>
                         </div>
                         <p className="text-sm text-slate-500">© 2026 Innexar. All rights reserved.</p>
                     </div>

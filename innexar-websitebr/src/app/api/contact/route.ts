@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendEmail, createTransporter } from '@/lib/email'
+import { sendEmail } from '@/lib/email'
 import { sendEmailResend, isResendConfigured } from '@/lib/email-resend'
 import { sendEmailOAuth2, isOAuth2Configured } from '@/lib/email-oauth2'
 import { getContactEmailTemplate, getAutoReplyTemplate } from '@/lib/email-templates'
@@ -181,10 +181,11 @@ export async function POST(request: NextRequest) {
         replyTo: email, // Permite responder diretamente ao cliente
       })
       console.log('✅ Email enviado com sucesso:', emailResult)
-    } catch (emailError: any) {
+    } catch (emailError) {
+      const ee = emailError instanceof Error ? emailError : new Error(String(emailError))
       console.error('❌ Erro ao enviar email principal:', {
-        message: emailError.message,
-        stack: emailError.stack,
+        message: ee.message,
+        stack: ee.stack,
         to: recipientEmail,
         service: useOAuth2 ? 'OAuth2' : (useResend ? 'Resend' : 'SMTP'),
       })
@@ -204,11 +205,12 @@ export async function POST(request: NextRequest) {
           text: autoReply.text,
         })
         console.log('✅ Resposta automática enviada com sucesso:', autoReplyResult)
-      } catch (autoReplyError: any) {
+      } catch (autoReplyError) {
         // Não falhar se a resposta automática der erro
+        const ae = autoReplyError instanceof Error ? autoReplyError : new Error(String(autoReplyError))
         console.error('❌ Erro ao enviar resposta automática:', {
-          message: autoReplyError.message,
-          stack: autoReplyError.stack,
+          message: ae.message,
+          stack: ae.stack,
           to: email,
           service: useOAuth2 ? 'OAuth2' : (useResend ? 'Resend' : 'SMTP'),
         })
@@ -221,21 +223,23 @@ export async function POST(request: NextRequest) {
       { message: 'Mensagem enviada com sucesso!' },
       { status: 200 }
     )
-  } catch (error: any) {
-    console.error('Erro ao processar formulário de contato:', error)
-    console.error('Stack trace:', error.stack)
+  } catch (error) {
+    const e = error instanceof Error ? error : new Error(String(error))
+    const errnoError = e as NodeJS.ErrnoException
+    console.error('Erro ao processar formulário de contato:', e)
+    console.error('Stack trace:', e.stack)
     console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      name: error.name,
+      message: e.message,
+      code: errnoError.code,
+      name: e.name,
     })
     
     // Erro de configuração SMTP
-    if (error.code === 'EAUTH' || error.code === 'ECONNECTION' || error.code === 'ETIMEDOUT') {
+    if (errnoError.code === 'EAUTH' || errnoError.code === 'ECONNECTION' || errnoError.code === 'ETIMEDOUT') {
       return NextResponse.json(
         { 
           error: 'Erro de configuração de email. Verifique as credenciais SMTP no Vercel.',
-          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+          details: process.env.NODE_ENV === 'development' ? e.message : undefined
         },
         { status: 500 }
       )
@@ -252,7 +256,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: 'Erro ao processar a mensagem. Tente novamente.',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? e.message : undefined
       },
       { status: 500 }
     )

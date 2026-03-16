@@ -8,11 +8,11 @@ import { useLocale } from 'next-intl'
 import confetti from 'canvas-confetti'
 import {
     Building2, MapPin, Briefcase, Target, Palette, Clock, Star,
-    Phone, Mail, Globe, Check, ChevronRight, ChevronLeft, Rocket,
+    Phone, Globe, Check, ChevronRight, ChevronLeft, Rocket,
     Plus, X, Facebook, Instagram, Linkedin, Youtube, MessageCircle,
-    ArrowRight, Users, FileText, Image, HelpCircle, Sparkles,
+    ArrowRight, Users, FileText, Image, Sparkles,
     Utensils, Scale, Stethoscope, Home, Wrench, Zap, TreeDeciduous, Sparkle,
-    Send, Calendar, LayoutDashboard, PartyPopper, LogIn, FileSignature, AlertCircle, Loader2
+    Calendar, LayoutDashboard, PartyPopper, LogIn, FileSignature, AlertCircle, Loader2
 } from 'lucide-react'
 import { CONTRACT_TEMPLATES } from '@/lib/contracts'
 import { Link } from '@/i18n/navigation'
@@ -40,7 +40,7 @@ const nicheIcons = {
 }
 
 // Page options (labels will be translated)
-const pageOptions = ['home', 'about', 'services', 'contact', 'gallery', 'testimonials', 'faq', 'pricing', 'team', 'blog']
+// pageOptions are defined inside component using translations (see `pages` variable)
 
 // Objective icons
 const objectiveIcons = {
@@ -132,8 +132,6 @@ interface FormData {
     existingDomain: string
     domainToPurchase: string
     domainPurchased: boolean
-    password?: string
-    confirmPassword?: string
     orderId?: string
     realDbId?: number // Added for internal API calls requiring integer ID
 }
@@ -215,7 +213,6 @@ function OnboardingContent() {
     const [serviceAreaInput, setServiceAreaInput] = useState('')
     const [isSigned, setIsSigned] = useState(false)
     const [signatureName, setSignatureName] = useState('')
-    const [orderAddons, setOrderAddons] = useState<any[]>([])
     const [allowedPages, setAllowedPages] = useState(5) // Default 5 pages
 
     const [formData, setFormData] = useState<FormData>({
@@ -265,8 +262,6 @@ function OnboardingContent() {
         existingDomain: '',
         domainToPurchase: '',
         domainPurchased: false,
-        password: '',
-        confirmPassword: '',
         orderId: orderId || '',
         realDbId: undefined,
     })
@@ -345,9 +340,8 @@ function OnboardingContent() {
                         updateField('realDbId', data.realDbId)
                     }
                     if (data.addons) {
-                        setOrderAddons(data.addons)
                         // Calculate limit: 5 base + 1 for each 'extra-page' addon
-                        const extraPages = data.addons.filter((a: any) =>
+                        const extraPages = data.addons.filter((a: { addon?: { slug: string }; slug?: string }) =>
                             (a.addon?.slug === 'extra-page' || a.slug === 'extra-page')
                         ).length
                         setAllowedPages(5 + extraPages)
@@ -527,9 +521,7 @@ function OnboardingContent() {
     const canProceed = () => {
         switch (currentStep) {
             case 1: return formData.businessName && formData.businessEmail && formData.businessPhone &&
-                !emailExists && !isCheckingEmail &&
-                formData.password && formData.password.length >= 8 &&
-                formData.password === formData.confirmPassword
+                !emailExists && !isCheckingEmail
             case 2: return formData.niche && formData.primaryCity && formData.state && (formData.niche !== 'other' || formData.customNiche)
             case 3: return formData.services.length > 0 && formData.primaryService
             case 4: return formData.siteObjective && formData.selectedPages.length >= 2
@@ -600,9 +592,9 @@ function OnboardingContent() {
             } else {
                 throw new Error(data.error || data.detail || 'Failed to sign contract')
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error signing contract:', error)
-            alert(`Error: ${error.message}`)
+            alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
         } finally {
             setIsSubmitting(false)
         }
@@ -651,7 +643,6 @@ function OnboardingContent() {
                 has_existing_domain: formData.hasExistingDomain,
                 existing_domain: formData.hasExistingDomain ? formData.existingDomain?.trim() || null : null,
                 domain_to_purchase: !formData.hasExistingDomain && formData.domainPurchased ? formData.domainToPurchase?.trim() || null : null,
-                password: formData.password,
                 is_complete: true,
                 completed_steps: TOTAL_STEPS,
                 locale: locale, // Send browser locale to backend
@@ -665,37 +656,8 @@ function OnboardingContent() {
             })
 
             if (response.ok) {
-                // Onboarding OK - auto login customer and send to portal dashboard
-                try {
-                    const loginResponse = await fetch('/api/launch/auth/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            email: formData.businessEmail,
-                            password: formData.password,
-                        }),
-                    })
-
-                    if (loginResponse.ok) {
-                        const loginData = await loginResponse.json()
-                        // Persist customer session for portal
-                        if (loginData.access_token) {
-                            localStorage.setItem('customer_token', loginData.access_token)
-                            localStorage.setItem('customer_email', formData.businessEmail)
-                            if (loginData.customer_id) {
-                                localStorage.setItem('customer_id', String(loginData.customer_id))
-                            }
-                        }
-                        // Redirect to client portal (external app)
-                        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'https://portal.innexar.com.br'
-                        window.location.href = `${portalUrl}/${locale}`
-                    } else {
-                        // If auto-login fails, just keep completion state and let customer use manual login
-                        console.error('Auto-login after onboarding failed', await loginResponse.text())
-                    }
-                } catch (e) {
-                    console.error('Error during auto-login after onboarding:', e)
-                }
+                // Conta é criada com senha temporária automática enviada por email.
+                // O cliente segue pelo fluxo padrão de login/verify/reset no portal.
 
                 // Track CompleteRegistration
                 MetaPixel.completeRegistration({
@@ -751,7 +713,7 @@ function OnboardingContent() {
 
                 throw new Error(errorMessage)
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error submitting onboarding:', error)
             const displayMessage = typeof error === 'string' ? error : 'Something went wrong. Please try again.'
             alert(displayMessage)
@@ -927,12 +889,12 @@ function OnboardingContent() {
                             <LayoutDashboard className="w-5 h-5" />
                             {t('onboarding.complete.dashboardButton')}
                         </a>
-                        <a
+                        <Link
                             href="/"
                             className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 border border-white/10 hover:border-white/20 rounded-xl font-medium text-slate-300 transition-all"
                         >
                             {t('onboarding.form.backHome')}
-                        </a>
+                        </Link>
                     </motion.div>
 
                     <motion.div
@@ -1194,50 +1156,13 @@ function OnboardingContent() {
                                     <p className="text-sm text-slate-400 mb-6">
                                         {t('onboarding.form.passwordHelp')}
                                     </p>
-                                    <form id="password-form" onSubmit={(e) => e.preventDefault()}>
-                                        {/* Hidden username field for accessibility */}
-                                        <input
-                                            type="text"
-                                            autoComplete="username"
-                                            value={formData.businessEmail || ''}
-                                            readOnly
-                                            tabIndex={-1}
-                                            aria-hidden="true"
-                                            style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', opacity: 0 }}
-                                        />
-                                        <div className="grid md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-2">{t('onboarding.form.password')} *</label>
-                                                <input
-                                                    type="password"
-                                                    autoComplete="new-password"
-                                                    value={formData.password}
-                                                    onChange={e => updateField('password', e.target.value)}
-                                                    placeholder={t('onboarding.form.passwordPlaceholder')}
-                                                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white placeholder-slate-500 focus:outline-none ${formData.password && formData.password.length < 8 ? 'border-red-500/50' : 'border-white/20 focus:border-blue-500'
-                                                        }`}
-                                                />
-                                                {formData.password && formData.password.length < 8 && (
-                                                    <p className="text-xs text-red-400 mt-1">{t('onboarding.form.errors.minPassword')}</p>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-2">{t('onboarding.form.confirmPassword')} *</label>
-                                                <input
-                                                    type="password"
-                                                    autoComplete="new-password"
-                                                    value={formData.confirmPassword}
-                                                    onChange={e => updateField('confirmPassword', e.target.value)}
-                                                    placeholder="••••••••"
-                                                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white placeholder-slate-500 focus:outline-none ${formData.confirmPassword && formData.password !== formData.confirmPassword ? 'border-red-500/50' : 'border-white/20 focus:border-blue-500'
-                                                        }`}
-                                                />
-                                                {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                                                    <p className="text-xs text-red-400 mt-1">{t('onboarding.form.errors.mismatch')}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </form>
+                                    <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
+                                        <p className="text-sm text-blue-100">
+                                            Vamos criar seu acesso automaticamente apos concluir o onboarding.
+                                            Voce recebera por email uma senha temporaria e o link de verificacao
+                                            para entrar no portal e alterar a senha em seguida.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -1733,7 +1658,7 @@ function OnboardingContent() {
                                                     </button>
                                                     <div className="font-medium">{t.name}</div>
                                                     {t.role && <div className="text-xs text-slate-400">{t.role}</div>}
-                                                    <div className="text-sm text-slate-300 mt-2">"{t.text}"</div>
+                                                    <div className="text-sm text-slate-300 mt-2">&quot;{t.text}&quot;</div>
                                                 </div>
                                             ))}
                                         </div>

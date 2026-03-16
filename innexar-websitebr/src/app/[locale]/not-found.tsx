@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
