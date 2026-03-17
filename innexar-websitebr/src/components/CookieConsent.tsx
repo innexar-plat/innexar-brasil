@@ -1,15 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Cookie, X, Settings, Check } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-
-declare global {
-    interface Window {
-        cookieConsent?: CookiePreferences
-    }
-}
 
 type CookiePreferences = {
     essential: boolean
@@ -32,7 +26,7 @@ export default function CookieConsent() {
     function applyConsent(prefs: CookiePreferences) {
         // Enable/disable analytics based on consent
         if (typeof window !== 'undefined') {
-            window.cookieConsent = prefs
+            ;(window as any).cookieConsent = prefs
 
             // Dispatch event for other scripts to listen
             window.dispatchEvent(new CustomEvent('cookieConsentUpdated', { detail: prefs }))
@@ -50,7 +44,7 @@ export default function CookieConsent() {
             // Load saved preferences
             try {
                 const saved = JSON.parse(consent)
-                setTimeout(() => setPreferences(saved), 0)
+                setPreferences(saved)
                 applyConsent(saved)
             } catch (e) {
                 console.error('Error parsing cookie consent:', e)

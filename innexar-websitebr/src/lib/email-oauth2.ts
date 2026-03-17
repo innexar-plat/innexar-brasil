@@ -30,8 +30,8 @@ async function getAccessToken() {
   try {
     const { credentials } = await oauth2Client.refreshAccessToken()
     return credentials.access_token
-  } catch (error) {
-    throw new Error(`Erro ao obter access token: ${error instanceof Error ? error.message : String(error)}`)
+  } catch (error: any) {
+    throw new Error(`Erro ao obter access token: ${error.message}`)
   }
 }
 
