@@ -1,0 +1,99 @@
+# Stack local: workspace-app + openclaw + backend (para testar integração).
+# Uso: docker compose -f docker-compose.local.yml up -d
+# Backend precisa de postgres; OpenClaw usa nome openclaw na rede.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: innexar-workspace-postgres
+    environment:
+      POSTGRES_USER: workspace_user
+      POSTGRES_PASSWORD: change_me
+      POSTGRES_DB: innexar_workspace
+    ports:
+      - "5432:5432"
+    volumes:
+      - innexar-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workspace_user -d innexar_workspace"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - innexar-local
+
+  backend:
+    build:
+      context: ./innexar-workspace
+      dockerfile: Dockerfile
+    container_name: innexar-workspace-backend
+    env_file:
+      - ./innexar-workspace/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://workspace_user:change_me@postgres:5432/innexar_workspace
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3010,http://127.0.0.1:3000,http://127.0.0.1:3010
+      FRONTEND_URL: http://localhost:3010
+      API_PUBLIC_URL: http://localhost:8000
+      OPENCLAW_GATEWAY_URL: http://openclaw:18789
+      OPENCLAW_GATEWAY_WS_URL: ws://openclaw:18789/ws
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - innexar-local
+
+  openclaw:
+    build:
+      context: ./innexar-ia-src
+      dockerfile: Dockerfile
+    image: openclaw:innexar
+    container_name: openclaw
+    ports:
+      - "18789:18789"
+    environment:
+      NODE_ENV: production
+      OPENCLAW_STATE_DIR: /data
+      OPENCLAW_CONFIG_PATH: /data/openclaw.json
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-2d4f9c1a8e7b42f0c6d3e5a1f9b47d2e6c3a1b5f8e2c9d4b7a0c3e1f6d8b2a4}
+    volumes:
+      - openclaw-data:/data
+      - ./innexar-ia-src/openclaw.json.local:/data/openclaw.json:ro
+    command: ["node", "openclaw.mjs", "gateway", "--allow-unconfigured", "--bind", "lan", "--port", "18789"]
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+    networks:
+      - innexar-local
+
+  workspace-app:
+    build:
+      context: ./innexar-workspace-app
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_USE_WORKSPACE_API=true
+        - NEXT_PUBLIC_WORKSPACE_API_URL=http://localhost:8000
+    container_name: innexar-workspace-app
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_USE_WORKSPACE_API: "true"
+      NEXT_PUBLIC_WORKSPACE_API_URL: http://localhost:8000
+    ports:
+      - "3010:3000"
+    depends_on:
+      - backend
+    networks:
+      - innexar-local
+
+volumes:
+  innexar-postgres-data:
+  openclaw-data:
+
+networks:
+  innexar-local:
+    driver: bridge
