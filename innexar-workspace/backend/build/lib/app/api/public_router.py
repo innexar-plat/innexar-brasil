@@ -16,7 +16,7 @@ from app.core.database import AsyncSessionLocal, get_db
 from app.core.security import create_token_customer, hash_password, verify_password
 from app.models.customer_password_reset import CustomerPasswordResetToken
 from app.models.customer_user import CustomerUser
-from app.modules.crm.models import Contact
+from app.modules.crm.models import Contact, Lead
 from app.providers.email.loader import get_email_provider
 from app.schemas.auth import CustomerLoginResponse, LoginRequest
 
@@ -195,6 +195,20 @@ async def web_to_lead(
     )
     db.add(contact)
     await db.flush()
+
+    origem = (body.source or "site").strip() or "site"
+    lead = Lead(
+        org_id="innexar",
+        nome=body.name,
+        email=body.email,
+        telefone=body.phone,
+        origem=origem,
+        status="novo",
+        contact_id=contact.id,
+    )
+    db.add(lead)
+    await db.flush()
+
     await log_audit(
         db,
         entity="contact",
@@ -203,6 +217,6 @@ async def web_to_lead(
         actor_type="public",
         actor_id=client_host,
         org_id="innexar",
-        payload={"message": body.message, "source": body.source},
+        payload={"message": body.message, "source": body.source, "lead_id": lead.id},
     )
-    return {"id": contact.id}
+    return {"id": contact.id, "lead_id": lead.id}

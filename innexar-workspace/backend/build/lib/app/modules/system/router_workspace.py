@@ -15,6 +15,7 @@ from app.core.encryption import decrypt_value, encrypt_value, mask_value
 from app.core.rbac import RequirePermission
 from app.models.feature_flag import FeatureFlag
 from app.models.hestia_settings import HestiaSettings
+from app.modules.crm.models import Pipeline, PipelineStage
 from app.models.integration_config import IntegrationConfig
 from app.models.role import role_permissions, user_roles
 from app.models.user import User
@@ -224,6 +225,14 @@ RBAC_PERMISSIONS = [
     "billing:write",
     "crm:read",
     "crm:write",
+    "crm.leads.view",
+    "crm.leads.create",
+    "crm.leads.edit",
+    "crm.deals.view",
+    "crm.deals.edit",
+    "crm.deals.move",
+    "crm.pipeline.manage",
+    "crm.reports.view",
     "projects:read",
     "projects:write",
     "support:read",
@@ -298,6 +307,26 @@ async def _run_bootstrap(db: AsyncSession) -> tuple[bool, list[str]]:
             db.add(FeatureFlag(key=key, enabled=enabled))
             flags_created.append(key)
     await db.flush()
+
+    # Default CRM pipeline (Vendas) if none exists
+    r = await db.execute(select(Pipeline).where(Pipeline.org_id == "innexar").limit(1))
+    if r.scalar_one_or_none() is None:
+        pipeline = Pipeline(org_id="innexar", nome="Vendas")
+        db.add(pipeline)
+        await db.flush()
+        for ordem, (nome, prob) in enumerate(
+            [("Qualificação", 10), ("Proposta", 30), ("Negociação", 60), ("Fechado", 100)]
+        ):
+            db.add(
+                PipelineStage(
+                    pipeline_id=pipeline.id,
+                    nome=nome,
+                    ordem=ordem,
+                    probabilidade=prob,
+                )
+            )
+        await db.flush()
+
     return admin_created, flags_created
 
 
