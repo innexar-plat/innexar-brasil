@@ -4,6 +4,57 @@ import { getTranslations } from 'next-intl/server'
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://innexar.com.br'
 const SITE_NAME = 'Innexar'
 
+/**
+ * Area served: São Paulo, litoral, Campinas, Curitiba, Brasília.
+ * Optional branch offices: set NEXT_PUBLIC_CURITIBA_ADDRESS / NEXT_PUBLIC_BRASILIA_ADDRESS
+ * when the company has physical offices there; then extend layout to emit additional LocalBusiness JSON-LD.
+ */
+/** Area served for contactPoint (string array) and localBusiness (Place array). */
+const AREA_SERVED_STRINGS = [
+  'Praia Grande',
+  'Santos',
+  'São Vicente',
+  'Cubatão',
+  'São Paulo',
+  'Região Metropolitana de São Paulo',
+  'Litoral Paulista',
+  'Campinas',
+  'Região de Campinas',
+  'Curitiba',
+  'Região Metropolitana de Curitiba',
+  'Brasília',
+  'Região Integrada de Desenvolvimento do Distrito Federal e Entorno',
+] as const
+
+/** Schema.org Place/City/AdministrativeArea for localBusiness.areaServed */
+const AREA_SERVED_PLACES = [
+  { '@type': 'City' as const, name: 'Praia Grande' },
+  { '@type': 'City' as const, name: 'Santos' },
+  { '@type': 'City' as const, name: 'São Vicente' },
+  { '@type': 'City' as const, name: 'Cubatão' },
+  { '@type': 'City' as const, name: 'São Paulo' },
+  { '@type': 'AdministrativeArea' as const, name: 'Região Metropolitana de São Paulo' },
+  { '@type': 'AdministrativeArea' as const, name: 'Litoral Paulista' },
+  { '@type': 'City' as const, name: 'Campinas' },
+  { '@type': 'AdministrativeArea' as const, name: 'Região de Campinas' },
+  { '@type': 'City' as const, name: 'Curitiba' },
+  { '@type': 'AdministrativeArea' as const, name: 'Região Metropolitana de Curitiba' },
+  { '@type': 'City' as const, name: 'Brasília' },
+  { '@type': 'AdministrativeArea' as const, name: 'Região Integrada de Desenvolvimento do Distrito Federal e Entorno' },
+]
+
+const SERVICE_PAGE_PATHS: Record<string, string> = {
+  servicesApps: 'services/apps',
+  servicesWeb: 'services/web',
+  servicesMarketing: 'services/marketing',
+  servicesInfra: 'services/infra',
+}
+
+function getPathForPage(page: string): string {
+  if (page === 'home') return ''
+  return SERVICE_PAGE_PATHS[page] ?? page
+}
+
 export async function generateMetadata(
   locale: string,
   page: string = 'home'
@@ -14,13 +65,18 @@ export async function generateMetadata(
   const description = t(`${page}.description`, { defaultValue: t('default.description') })
   const keywords = t(`${page}.keywords`, { defaultValue: t('default.keywords') })
 
-  const cleanPath = page === 'home' ? '' : `/${page}`
+  const pathSegment = getPathForPage(page)
+  const cleanPath = pathSegment ? `/${pathSegment}` : ''
   const url = `${SITE_URL}/${locale}${cleanPath}`
   const ogImageByPage: Record<string, string> = {
     home: 'og-image.jpg',
     'criar-site': 'og-criar-site.jpg',
     'prospector-ai': 'og-prospector-ai.jpg',
     services: 'og-services.jpg',
+    servicesApps: 'og-services.jpg',
+    servicesWeb: 'og-services.jpg',
+    servicesMarketing: 'og-services.jpg',
+    servicesInfra: 'og-services.jpg',
   }
   const ogImage = `${SITE_URL}/${ogImageByPage[page] || 'og-image.jpg'}`
   const ogLocale = locale === 'pt' ? 'pt_BR' : locale === 'es' ? 'es_ES' : 'en_US'
@@ -102,7 +158,8 @@ export function generateStructuredData(
   page: string = 'home'
 ) {
   const baseUrl = SITE_URL
-  const url = `${baseUrl}/${locale}${page !== 'home' ? `/${page}` : ''}`
+  const pathSegment = getPathForPage(page)
+  const url = `${baseUrl}/${locale}${pathSegment ? `/${pathSegment}` : ''}`
 
   const address = {
     '@type': 'PostalAddress' as const,
@@ -131,16 +188,7 @@ export function generateStructuredData(
       '@type': 'ContactPoint',
       telephone: '+55-13-99182-1557',
       contactType: 'sales',
-      areaServed: [
-        'Praia Grande',
-        'Santos',
-        'São Vicente',
-        'Cubatão',
-        'São Paulo',
-        'Região Metropolitana de São Paulo',
-        'Campinas',
-        'Região de Campinas',
-      ],
+      areaServed: [...AREA_SERVED_STRINGS],
       availableLanguage: ['Portuguese', 'English', 'Spanish'],
     },
     sameAs: [
@@ -163,14 +211,7 @@ export function generateStructuredData(
       opens: '09:00',
       closes: '18:00',
     },
-    areaServed: [
-      { '@type': 'City', name: 'Praia Grande' },
-      { '@type': 'City', name: 'Santos' },
-      { '@type': 'City', name: 'São Vicente' },
-      { '@type': 'City', name: 'Cubatão' },
-      { '@type': 'City', name: 'São Paulo' },
-      { '@type': 'City', name: 'Campinas' },
-    ],
+    areaServed: AREA_SERVED_PLACES,
   }
 
   const website = {
@@ -188,22 +229,28 @@ export function generateStructuredData(
     },
   }
 
+  const pathSeg = getPathForPage(page)
+  const breadcrumbSegments =
+    page === 'home'
+      ? []
+      : pathSeg?.includes('/')
+        ? [
+            { position: 2, name: 'Serviços', item: `${baseUrl}/${locale}/services` },
+            { position: 3, name: pathSeg.split('/').pop() ?? pathSeg, item: url },
+          ]
+        : [{ position: 2, name: page.charAt(0).toUpperCase() + page.slice(1), item: url }]
+
   const breadcrumb = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: `${baseUrl}/${locale}`,
-      },
-      ...(page !== 'home' ? [{
-        '@type': 'ListItem',
-        position: 2,
-        name: page.charAt(0).toUpperCase() + page.slice(1),
-        item: url,
-      }] : []),
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${baseUrl}/${locale}` },
+      ...breadcrumbSegments.map((s) => ({
+        '@type': 'ListItem' as const,
+        position: s.position,
+        name: s.name,
+        item: s.item,
+      })),
     ],
   }
 

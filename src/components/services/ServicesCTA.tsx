@@ -53,9 +53,9 @@ export default function ServicesCTA() {
   ]
 
   return (
-    <section className="py-20 bg-gray-900 text-white relative overflow-hidden">
+    <section className="py-20 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white relative overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-10 dark:opacity-20">
         <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-cyan-600"></div>
         <div className="absolute inset-0" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -74,7 +74,7 @@ export default function ServicesCTA() {
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             {t('title')}
           </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-8">
+          <p className="text-xl text-slate-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed mb-8">
             {t('subtitle')}
           </p>
           
@@ -91,7 +91,7 @@ export default function ServicesCTA() {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 href="/portfolio"
-                className="border-2 border-white hover:bg-white hover:text-gray-900 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 text-center block"
+                className="border-2 border-slate-900 dark:border-white hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 text-slate-900 dark:text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 text-center block"
               >
                 {t('secondaryButton')}
               </Link>
@@ -113,21 +113,21 @@ export default function ServicesCTA() {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
                 whileHover={{ y: -5 }}
-                className="bg-gray-800 rounded-xl p-6 text-center hover:bg-gray-700 transition-all duration-300 group cursor-pointer"
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 text-center shadow-md hover:shadow-lg dark:hover:bg-gray-700 transition-all duration-300 group cursor-pointer border border-slate-200 dark:border-transparent"
               >
                 <div className={`${option.color} rounded-lg p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center transition-all duration-300`}>
                   <IconComponent className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2 group-hover:text-blue-400 transition-colors">
+                <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   {option.title}
                 </h3>
-                <p className="text-gray-400 text-sm mb-3">
+                <p className="text-slate-600 dark:text-gray-400 text-sm mb-3">
                   {option.description}
                 </p>
-                <div className="text-blue-400 font-medium text-sm">
+                <div className="text-blue-600 dark:text-blue-400 font-medium text-sm">
                   {option.value}
                 </div>
-                <div className="mt-3 text-blue-400 text-xs uppercase tracking-wide">
+                <div className="mt-3 text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wide">
                   {option.action}
                 </div>
               </motion.a>
@@ -177,10 +177,10 @@ export default function ServicesCTA() {
           viewport={{ once: true }}
           className="mt-16 text-center"
         >
-          <p className="text-gray-400 text-sm mb-4">
+          <p className="text-slate-600 dark:text-gray-400 text-sm mb-4">
             {t('trust.subtitle')}
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-8 text-gray-500">
+          <div className="flex flex-wrap justify-center items-center gap-8 text-slate-500 dark:text-gray-500">
             {(t.raw('trust.indicators') as string[]).map((indicator) => (
               <div key={indicator} className="flex items-center">
                 <span className="text-green-400 mr-2">✓</span>

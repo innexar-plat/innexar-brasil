@@ -2,6 +2,10 @@
   "navigation": {
     "home": "Home",
     "services": "Services",
+    "servicesApps": "App Development",
+    "servicesWeb": "Web Development",
+    "servicesMarketing": "Digital Marketing",
+    "servicesInfra": "Infrastructure & IT",
     "saas": "SaaS",
     "saasInnexar": "Innexar ERP",
     "saasStructurone": "StructurOne",
@@ -1744,6 +1748,26 @@
       "description": "Complete technology solutions for visionary companies. From app development to cutting-edge artificial intelligence integration.",
       "keywords": "custom development, cloud architecture, AI, machine learning, software outsourcing"
     },
+    "servicesApps": {
+      "title": "App Development in São Paulo and Brazil | Innexar",
+      "description": "Mobile app development for iOS and Android in São Paulo, Santos, Curitiba and Brasília. Native apps, React Native and Flutter with local SEO.",
+      "keywords": "app development São Paulo, mobile app Brazil, Android iOS app Curitiba, app development Brasília, create app, Innexar"
+    },
+    "servicesWeb": {
+      "title": "Web Development in São Paulo and Brazil | Innexar",
+      "description": "Professional website and web development in São Paulo, Santos, Curitiba and Brasília. Corporate sites, e-commerce and portals with local SEO.",
+      "keywords": "web development São Paulo, website creation Brazil, professional site Curitiba, web development Brasília, create website, Innexar"
+    },
+    "servicesMarketing": {
+      "title": "Digital Marketing in São Paulo and Brazil | Innexar",
+      "description": "Digital marketing and paid traffic in São Paulo, Curitiba and Brasília. Social media, local SEO, Google Ads and Meta Ads for your business.",
+      "keywords": "digital marketing São Paulo, paid traffic Brazil, digital marketing Curitiba, digital marketing Brasília, local SEO, Innexar"
+    },
+    "servicesInfra": {
+      "title": "IT Infrastructure in São Paulo and Brazil | Innexar",
+      "description": "IT infrastructure, cloud and DevOps in São Paulo, Curitiba and Brasília. Servers, networks, security and technical support for businesses.",
+      "keywords": "IT infrastructure São Paulo, cloud Curitiba, DevOps Brasília, technical support, network infrastructure, Innexar"
+    },
     "portfolio": {
       "title": "Success Stories | Explore Our Premium Digital Solutions",
       "description": "See how we help businesses worldwide shine with innovative, high-quality digital products.",
@@ -1793,6 +1817,24 @@
       "title": "Prospector AI | AI-Powered Prospecting | Innexar",
       "description": "B2B prospecting platform with artificial intelligence. Find leads by location, analyze competition and market viability, manage team. Create your account.",
       "keywords": "Prospector AI, AI prospecting, leads by location, competition analysis, market intelligence, B2B prospecting"
+    }
+  },
+  "servicePage": {
+    "apps": {
+      "subtitle": "Custom mobile apps for iOS and Android in São Paulo, Santos, Curitiba and Brasília. Native, React Native and Flutter.",
+      "cta": "Request app quote"
+    },
+    "web": {
+      "subtitle": "Professional websites, e-commerce and portals in São Paulo, Santos, Curitiba and Brasília. Local SEO and custom delivery.",
+      "cta": "Request website quote"
+    },
+    "marketing": {
+      "subtitle": "Paid traffic, local SEO and social media in São Paulo, Curitiba and Brasília. Google Ads, Meta Ads and digital strategy.",
+      "cta": "Talk to an expert"
+    },
+    "infra": {
+      "subtitle": "Cloud, DevOps, networks and technical support in São Paulo, Curitiba and Brasília. Secure, scalable infrastructure.",
+      "cta": "Request assessment"
     }
   },
   "launch": {

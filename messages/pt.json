@@ -2,6 +2,10 @@
   "navigation": {
     "home": "Início",
     "services": "Serviços",
+    "servicesApps": "Desenvolvimento de Apps",
+    "servicesWeb": "Desenvolvimento Web",
+    "servicesMarketing": "Marketing Digital",
+    "servicesInfra": "Infraestrutura e TI",
     "saas": "SaaS",
     "saasInnexar": "Innexar ERP",
     "saasStructurone": "StructurOne",
@@ -1878,6 +1882,26 @@
       "description": "Serviços de criação de sites, desenvolvimento de aplicativos e integração com inteligência artificial. Soluções sob medida para sua empresa em SP e Brasil.",
       "keywords": "criação de sites, criação de aplicativos, desenvolvimento de apps, inteligência artificial, IA, machine learning, site profissional, app sob medida, desenvolvimento web, Innexar"
     },
+    "servicesApps": {
+      "title": "Desenvolvimento de Apps em São Paulo e Litoral | Innexar",
+      "description": "Desenvolvimento de aplicativos mobile iOS e Android em São Paulo, Praia Grande, Santos, Curitiba e Brasília. Apps nativos, React Native e Flutter com SEO local.",
+      "keywords": "desenvolvimento de app São Paulo, app mobile litoral paulista, aplicativo Android iOS Curitiba, desenvolvimento de apps Brasília, criar aplicativo, Innexar"
+    },
+    "servicesWeb": {
+      "title": "Desenvolvimento Web em São Paulo e Litoral | Innexar",
+      "description": "Criação de sites profissionais e desenvolvimento web em São Paulo, Praia Grande, Santos, Curitiba e Brasília. Sites institucionais, e-commerce e portais com SEO local.",
+      "keywords": "desenvolvimento web São Paulo, criação de sites litoral, site profissional Curitiba, desenvolvimento web Brasília, criar site, Innexar"
+    },
+    "servicesMarketing": {
+      "title": "Marketing Digital em São Paulo e Região | Innexar",
+      "description": "Marketing digital e tráfego pago em São Paulo, litoral, Curitiba e Brasília. Gestão de redes, SEO local, Google Ads e Meta Ads para sua empresa.",
+      "keywords": "marketing digital São Paulo, tráfego pago litoral, marketing digital Curitiba, marketing digital Brasília, SEO local, Innexar"
+    },
+    "servicesInfra": {
+      "title": "Infraestrutura e TI em São Paulo e Brasil | Innexar",
+      "description": "Infraestrutura de TI, cloud e DevOps em São Paulo, Curitiba e Brasília. Servidores, redes, segurança e suporte técnico para empresas.",
+      "keywords": "infraestrutura TI São Paulo, cloud Curitiba, DevOps Brasília, suporte TI, infraestrutura de redes, Innexar"
+    },
     "portfolio": {
       "title": "Portfólio | Criação de Sites e Aplicativos | Cases Innexar",
       "description": "Cases de sucesso em criação de sites, aplicativos e soluções com inteligência artificial. Conheça os projetos desenvolvidos pela Innexar.",
@@ -1927,6 +1951,24 @@
       "title": "Prospector AI | IA para Prospecção B2B | Innexar",
       "description": "Plataforma de prospecção com inteligência artificial. Busque leads por localização, analise com IA, multiplique vendas. Crie sua conta grátis.",
       "keywords": "inteligência artificial, IA prospecção, Prospector AI, prospecção com IA, leads por localização, análise de concorrência, IA para vendas, prospecção B2B, Innexar"
+    }
+  },
+  "servicePage": {
+    "apps": {
+      "subtitle": "Aplicativos mobile iOS e Android sob medida para São Paulo, litoral, Curitiba e Brasília. Nativos, React Native e Flutter.",
+      "cta": "Solicitar orçamento para app"
+    },
+    "web": {
+      "subtitle": "Sites profissionais, e-commerce e portais em São Paulo, litoral, Curitiba e Brasília. SEO local e entrega sob medida.",
+      "cta": "Solicitar orçamento para site"
+    },
+    "marketing": {
+      "subtitle": "Tráfego pago, SEO local e gestão de redes em São Paulo, Curitiba e Brasília. Google Ads, Meta Ads e estratégia digital.",
+      "cta": "Falar com especialista"
+    },
+    "infra": {
+      "subtitle": "Cloud, DevOps, redes e suporte técnico em São Paulo, Curitiba e Brasília. Infraestrutura segura e escalável.",
+      "cta": "Solicitar diagnóstico"
     }
   },
   "launch": {

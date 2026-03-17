@@ -49,6 +49,26 @@
       "description": "Soluciones tecnológicas completas para empresas visionarias. Desde el desarrollo de apps hasta la integración de IA de vanguardia.",
       "keywords": "desarrollo personalizado, arquitectura en la nube, IA, machine learning, outsourcing de software"
     },
+    "servicesApps": {
+      "title": "Desarrollo de Apps en São Paulo y Brasil | Innexar",
+      "description": "Desarrollo de aplicaciones móviles iOS y Android en São Paulo, Santos, Curitiba y Brasília. Apps nativas, React Native y Flutter con SEO local.",
+      "keywords": "desarrollo de app São Paulo, app móvil Brasil, aplicación Android iOS Curitiba, desarrollo de apps Brasília, crear aplicación, Innexar"
+    },
+    "servicesWeb": {
+      "title": "Desarrollo Web en São Paulo y Brasil | Innexar",
+      "description": "Creación de sitios profesionales y desarrollo web en São Paulo, Santos, Curitiba y Brasília. Sitios corporativos, e-commerce y portales con SEO local.",
+      "keywords": "desarrollo web São Paulo, creación de sitios Brasil, sitio profesional Curitiba, desarrollo web Brasília, crear sitio, Innexar"
+    },
+    "servicesMarketing": {
+      "title": "Marketing Digital en São Paulo y Brasil | Innexar",
+      "description": "Marketing digital y tráfico pago en São Paulo, Curitiba y Brasília. Redes sociales, SEO local, Google Ads y Meta Ads para tu empresa.",
+      "keywords": "marketing digital São Paulo, tráfico pago Brasil, marketing digital Curitiba, marketing digital Brasília, SEO local, Innexar"
+    },
+    "servicesInfra": {
+      "title": "Infraestructura y TI en São Paulo y Brasil | Innexar",
+      "description": "Infraestructura de TI, cloud y DevOps en São Paulo, Curitiba y Brasília. Servidores, redes, seguridad y soporte técnico para empresas.",
+      "keywords": "infraestructura TI São Paulo, cloud Curitiba, DevOps Brasília, soporte técnico, redes, Innexar"
+    },
     "portfolio": {
       "title": "Casos de Éxito | Explore Nuestras Soluciones Digitales Premium",
       "description": "Conozca nuestros proyectos y soluciones desarrollados para clientes de diversos sectores. Casos de éxito en desarrollo de software.",
@@ -100,9 +120,31 @@
       "keywords": "Prospector AI, prospección con IA, leads por ubicación, análisis de competencia, inteligencia de mercado, prospección B2B"
     }
   },
+  "servicePage": {
+    "apps": {
+      "subtitle": "Aplicaciones móviles iOS y Android a medida en São Paulo, Santos, Curitiba y Brasília. Nativas, React Native y Flutter.",
+      "cta": "Solicitar presupuesto para app"
+    },
+    "web": {
+      "subtitle": "Sitios profesionales, e-commerce y portales en São Paulo, Santos, Curitiba y Brasília. SEO local y entrega a medida.",
+      "cta": "Solicitar presupuesto para sitio"
+    },
+    "marketing": {
+      "subtitle": "Tráfico pago, SEO local y redes sociales en São Paulo, Curitiba y Brasília. Google Ads, Meta Ads y estrategia digital.",
+      "cta": "Hablar con un experto"
+    },
+    "infra": {
+      "subtitle": "Cloud, DevOps, redes y soporte técnico en São Paulo, Curitiba y Brasília. Infraestructura segura y escalable.",
+      "cta": "Solicitar diagnóstico"
+    }
+  },
   "navigation": {
     "home": "Inicio",
     "services": "Servicios",
+    "servicesApps": "Desarrollo de Apps",
+    "servicesWeb": "Desarrollo Web",
+    "servicesMarketing": "Marketing Digital",
+    "servicesInfra": "Infraestructura y TI",
     "about": "Nosotros",
     "portfolio": "Portafolio",
     "blockchain": "Blockchain",

@@ -10,6 +10,7 @@ import StructuredData from '@/components/StructuredData'
 import DeferredWidgets from '@/components/DeferredWidgets'
 import MetaPixelProvider from '@/components/providers/MetaPixelProvider'
 import { SiteConfigProvider } from '@/contexts/SiteConfigContext'
+import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import '../globals.css'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
@@ -62,14 +63,16 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <GoogleAnalytics />
         </Suspense>
-        <MetaPixelProvider pixelId={process.env.NEXT_PUBLIC_META_PIXEL_ID}>
-          <NextIntlClientProvider messages={messages} locale={locale}>
-            <SiteConfigProvider>
-              {children}
-            </SiteConfigProvider>
-            <DeferredWidgets />
-          </NextIntlClientProvider>
-        </MetaPixelProvider>
+        <ThemeProvider>
+          <MetaPixelProvider pixelId={process.env.NEXT_PUBLIC_META_PIXEL_ID}>
+            <NextIntlClientProvider messages={messages} locale={locale}>
+              <SiteConfigProvider>
+                {children}
+              </SiteConfigProvider>
+              <DeferredWidgets />
+            </NextIntlClientProvider>
+          </MetaPixelProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
