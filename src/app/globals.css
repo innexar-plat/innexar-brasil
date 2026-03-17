@@ -40,17 +40,17 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-/* Softer dark mode: less aggressive than full black/slate-950 */
+/* Softer dark mode: lighter than full black, readable contrast */
 @media (prefers-color-scheme: dark) {
   :root {
     --primary: #3b82f6;
     --primary-dark: #2563eb;
     --secondary: #94a3b8;
     --accent: #22d3ee;
-    --muted: #1e293b;
-    --border: #334155;
-    --background: oklch(0.18 0.01 260);
-    --foreground: oklch(0.97 0 0);
+    --muted: #334155;
+    --border: #475569;
+    --background: oklch(0.22 0.015 260);
+    --foreground: oklch(0.96 0 0);
   }
 }
 

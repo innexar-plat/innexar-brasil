@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlobeAltIcon } from '@heroicons/react/24/outline';
 import { ChevronDown } from 'lucide-react';
-import WhatsAppIcon from '@/components/WhatsAppIcon';
 import { ServicesDropdown } from './ServicesDropdown';
 
 const LANGUAGES = [
@@ -88,16 +87,6 @@ export function HeaderNavDesktop({
     </div>
 
     <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4 lg:items-center">
-      <a
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Abrir conversa no WhatsApp"
-        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-lg bg-[#25D366] hover:bg-[#20BD5A] transition-colors shadow-sm"
-      >
-        <WhatsAppIcon className="h-5 w-5" />
-        <span>WhatsApp</span>
-      </a>
       <div className="relative">
         <button
           onClick={() => setLanguageMenuOpen(!languageMenuOpen)}

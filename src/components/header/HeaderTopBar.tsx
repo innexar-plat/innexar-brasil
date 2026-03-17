@@ -15,7 +15,7 @@ type HeaderTopBarProps = {
 
 export function HeaderTopBar({ topEmailValue, topPhones, whatsappUrl, topCta }: HeaderTopBarProps) {
   return (
-    <div className="hidden lg:block bg-slate-900 text-slate-100 text-sm overflow-visible">
+    <div className="hidden lg:block bg-slate-800/90 text-slate-200 text-sm overflow-visible border-b border-slate-700/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 min-h-[44px] flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 xl:gap-6 min-w-0 flex-1">
           <a

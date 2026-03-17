@@ -61,17 +61,18 @@ export default function Header() {
         whatsappUrl={whatsappUrl}
         topCta={headerT('top.cta')}
       />
-      <div className="bg-zinc-950/90 backdrop-blur-lg border-b border-zinc-800">
+      <div className="bg-slate-800/95 backdrop-blur-lg border-b border-slate-600/80">
         <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-20 items-center justify-between">
             <div className="flex lg:flex-1">
               <Link href="/" className="flex items-center group">
-                <span className="relative block h-14 w-[180px] shrink-0">
+                <span className="relative flex items-center justify-center h-14 w-[180px] shrink-0 rounded-lg bg-white/10 px-3 py-2 ring-1 ring-white/20">
                   <Image
                     src="/logo-header.png"
                     alt="Innexar"
-                    fill
-                    className="object-contain object-left transition-transform duration-300 group-hover:scale-105"
+                    width={160}
+                    height={40}
+                    className="object-contain object-left w-full h-full transition-transform duration-300 group-hover:scale-105"
                     sizes="180px"
                     priority
                   />
