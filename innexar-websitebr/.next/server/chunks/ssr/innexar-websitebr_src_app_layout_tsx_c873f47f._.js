@@ -1,3 +1,0 @@
-module.exports=[62483,a=>{"use strict";function b({children:a}){return a}a.s(["default",()=>b,"metadata",0,{title:"Innexar - Technology Solutions",description:"Professional technology solutions, software development, infrastructure and consulting services",icons:{icon:"/favicon.png",shortcut:"/favicon.png",apple:"/favicon.png"}}])}];
-
-//# sourceMappingURL=innexar-websitebr_src_app_layout_tsx_c873f47f._.js.map

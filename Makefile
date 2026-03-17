@@ -1,38 +1,17 @@
-# innexar-websitebr — atalhos (containers de produção com volumes / hot-reload)
-.PHONY: help build up down rebuild logs dev lint test
+# Innexar Brasil – cada projeto é um repositório Git separado com seu próprio GitHub
+# Uso: make push-websitebr | push-workspace | push-workspace-app (entra na pasta e dá git push)
 
-SERVICE := innexar-websitebr
+push-websitebr:
+	cd innexar-websitebr && git push origin main
 
-help:
-	@echo "  make build   - Build da imagem Docker (--no-cache)"
-	@echo "  make up      - Sobe os containers (com volumes, hot-reload)"
-	@echo "  make down    - Para e remove os containers"
-	@echo "  make rebuild - Build + up"
-	@echo "  make logs    - Logs do serviço (follow, tail 50)"
-	@echo "  make dev     - Next.js em desenvolvimento local (npm run dev)"
-	@echo "  make lint    - ESLint"
-	@echo "  make test    - Testes"
+push-workspace:
+	cd innexar-workspace && git push origin main
 
-build:
-	docker compose build --no-cache $(SERVICE)
+push-workspace-app:
+	cd innexar-workspace-app && git push origin main
 
-up:
-	docker compose up -d --force-recreate
+# Portal e training: init e remote quando tiverem conteúdo
+# push-portal:    cd innexar-portal && git push origin main
+# push-training:  cd innexar-training && git push origin main
 
-down:
-	docker compose down
-
-rebuild: build up
-	@echo "Rebuild e up concluídos. Verifique: make logs"
-
-logs:
-	docker compose logs -f --tail=50 $(SERVICE)
-
-dev:
-	npm run dev
-
-lint:
-	npm run lint
-
-test:
-	npm test
+.PHONY: push-websitebr push-workspace push-workspace-app

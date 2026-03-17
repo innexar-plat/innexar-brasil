@@ -1,70 +1,35 @@
-# 🌐 Innexar Website
+# Innexar Brasil – Workspace
 
-Website profissional da Innexar - Soluções em tecnologia, desenvolvimento de software, infraestrutura e serviços de consultoria.
+Cada projeto é um **repositório Git separado**, com seu próprio `.git` e repositório no GitHub. Não é monorepo com subtree: você entra na pasta do projeto e dá `git push` no repo daquele projeto.
 
-## 🚀 Tecnologias
+## Projetos (cada um com GitHub próprio)
 
-- **Next.js 16.0.1** - Framework React
-- **React 19** - Biblioteca UI
-- **TypeScript** - Tipagem estática
-- **Tailwind CSS 4** - Estilização
-- **next-intl** - Internacionalização (PT, EN, ES)
-- **Framer Motion** - Animações
+| Pasta | Repositório GitHub |
+|-------|--------------------|
+| `innexar-websitebr/` | [innexar-plat/innexar-websitebr](https://github.com/innexar-plat/innexar-websitebr) |
+| `innexar-workspace/` | [innexar-plat/innexar-workspace](https://github.com/innexar-plat/innexar-workspace) |
+| `innexar-workspace-app/` | [innexar-plat/innexar-workspace-app](https://github.com/innexar-plat/innexar-workspace-app) |
+| `innexar-portal/` | (configurar quando houver conteúdo) |
+| `innexar-training/` | (configurar quando houver conteúdo) |
 
-## 📦 Instalação
-
-```bash
-# Instalar dependências
-npm install
-
-# Executar em desenvolvimento
-npm run dev
-```
-
-Abra [http://localhost:3000](http://localhost:3000) no navegador.
-
-## 🌍 Idiomas
-
-O site suporta 3 idiomas:
-- 🇧🇷 Português: `/pt`
-- 🇺🇸 Inglês: `/en`
-- 🇪🇸 Espanhol: `/es`
-
-## 🚀 Deploy
-
-Para instruções completas de deploy em servidor Linux, consulte o [**Guia de Deploy**](./DEPLOY.md).
-
-### Deploy Rápido
+## Push por projeto
 
 ```bash
-# Com Docker (recomendado)
-docker-compose up -d --build
+# Site
+make push-websitebr
+# ou: cd innexar-websitebr && git push origin main
 
-# Com script automatizado
-chmod +x deploy.sh
-./deploy.sh docker  # ou pm2, systemd
+# Backend workspace
+make push-workspace
+
+# App workspace
+make push-workspace-app
 ```
 
-## 📝 Scripts Disponíveis
+Cada pasta tem seu próprio `git status` / `git add` / `git commit` / `git push`; o repositório da raiz (Innexar-Brasil) não rastreia o conteúdo das pastas dos projetos (elas estão no `.gitignore`).
 
-- `npm run dev` - Servidor de desenvolvimento
-- `npm run build` - Build para produção
-- `npm run start` - Iniciar servidor de produção
-- `npm run lint` - Verificar código
+## Desenvolvimento
 
-## 🔁 CI
-
-Este app inclui workflows proprios em `.github/workflows` para uso no repositorio individual:
-
-- `ci.yml`: lint, teste e build
-- `docker.yml`: build e publish da imagem no GHCR
-
-## 📚 Documentação
-
-- [Guia de Deploy](./DEPLOY.md) - Instruções completas para deploy
-- [Next.js Documentation](https://nextjs.org/docs)
-- [next-intl Documentation](https://next-intl-docs.vercel.app/)
-
-## 📄 Licença
-
-Proprietário - Innexar
+- **Website:** `cd innexar-websitebr && npm install && npm run dev`
+- **Workspace (backend):** ver `innexar-workspace/` (README no repo do projeto)
+- **Workspace app:** `cd innexar-workspace-app && npm run dev`
