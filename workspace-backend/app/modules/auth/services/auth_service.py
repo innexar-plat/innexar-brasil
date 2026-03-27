@@ -1,3 +1,5 @@
+import bcrypt as _bcrypt
+
 from app.core.errors import unauthorized
 from app.core.security import create_access_token
 from app.modules.auth.dtos.login_dto import LoginRequestDto, LoginResponseDto
@@ -5,6 +7,8 @@ from app.modules.auth.repositories.auth_repository import AuthRepository
 
 
 class AuthService:
+    """Synchronous auth service — used by unit tests via AuthRepository stub."""
+
     def __init__(self, repository: AuthRepository) -> None:
         self.repository = repository
 
@@ -13,7 +17,7 @@ class AuthService:
         if user is None:
             raise unauthorized("Invalid credentials")
 
-        if dto.password != user.password_hash:
+        if not _bcrypt.checkpw(dto.password.encode(), user.password_hash.encode()):
             raise unauthorized("Invalid credentials")
 
         token = create_access_token(subject=user.id)
