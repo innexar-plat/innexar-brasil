@@ -1,4 +1,4 @@
-import type { ApiError, Subscription, Invoice, Payment, Product, Ticket, CreateTicketPayload } from '@/types'
+import type { Subscription, Invoice, Payment, Product, Ticket, CreateTicketPayload } from '@/types'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -34,13 +34,24 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   })
 
   if (!res.ok) {
-    let errorBody: ApiError
+    let errorBody: Record<string, unknown>
     try {
       errorBody = await res.json()
     } catch {
-      errorBody = { statusCode: res.status, error: res.statusText, message: 'Erro desconhecido' }
+      errorBody = {}
     }
-    throw new ApiClientError(errorBody.statusCode, errorBody.error, errorBody.message, errorBody.details)
+    // FastAPI returns {detail: string | object[]}, our API returns {message, error, details}
+    const detail = errorBody.detail
+    const message =
+      (errorBody.message as string | undefined) ??
+      (typeof detail === 'string' ? detail : null) ??
+       'Erro desconhecido'
+    throw new ApiClientError(
+      (errorBody.statusCode as number | undefined) ?? res.status,
+      (errorBody.error as string | undefined) ?? res.statusText,
+      message,
+      errorBody.details as { field: string; message: string }[] | undefined,
+    )
   }
 
   if (res.status === 204) return undefined as T

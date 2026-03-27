@@ -23,7 +23,11 @@ export default function LoginPage() {
       await login(email, password)
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Credenciais inválidas.')
+      if (err instanceof ApiClientError && err.statusCode === 401) {
+        setError('E-mail ou senha incorretos.')
+      } else {
+        setError(err instanceof ApiClientError ? err.message : 'Erro ao conectar. Tente novamente.')
+      }
     } finally {
       setIsLoading(false)
     }

@@ -65,10 +65,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))
+    // FastAPI returns {detail: string | object[]}, our API returns {message, error, details}
+    const detail = data.detail
+    const message =
+      data.message ??
+      (typeof detail === 'string' ? detail : null) ??
+      `HTTP ${res.status}`
     throw new ApiClientError(
       res.status,
       data.error ?? 'Error',
-      data.message ?? `HTTP ${res.status}`,
+      message,
       data.details,
     )
   }
