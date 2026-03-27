@@ -34,13 +34,16 @@ export interface ApiError {
 // ─── Customers ────────────────────────────────────────────────────────────────
 export interface Customer {
   id: string
-  name: string
+  name?: string        // may be absent if backend returns first_name + last_name
+  first_name?: string  // backend field
+  last_name?: string   // backend field
   email: string
   phone?: string
   document?: string
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  is_active?: boolean  // optional — backend returns status string
+  status?: string      // backend field ('active' | 'inactive')
+  created_at?: string
+  updated_at?: string
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────
@@ -117,13 +120,14 @@ export interface Ticket {
   id: string
   customer_id?: string
   customer?: Customer
-  subject: string
-  message: string
+  title?: string       // backend field
+  subject?: string     // legacy frontend field  
+  message?: string
   status: TicketStatus
   priority: TicketPriority
   assigned_to?: string
-  created_at: string
-  updated_at: string
+  created_at?: string
+  updated_at?: string
 }
 
 // ─── Leads ────────────────────────────────────────────────────────────────────
@@ -153,9 +157,10 @@ export interface Contact {
   company?: string
   position?: string
   tags?: string[]
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  is_active?: boolean  // optional — backend returns status string
+  status?: string      // backend field
+  created_at?: string
+  updated_at?: string
 }
 
 // ─── CRM ──────────────────────────────────────────────────────────────────────
@@ -164,16 +169,12 @@ export type DealStatus = 'open' | 'won' | 'lost' | 'on_hold'
 export interface Deal {
   id: string
   title: string
-  value: number
-  status: DealStatus
-  customer_id?: string
-  customer?: Customer
+  value?: number
+  stage_id?: string
   lead_id?: string
-  stage: string
-  expected_close_date?: string
-  notes?: string
+  closing_date?: string
+  status: DealStatus
   created_at: string
-  updated_at: string
 }
 
 // ─── Campaigns ────────────────────────────────────────────────────────────────
@@ -183,17 +184,18 @@ export type CampaignType = 'email' | 'whatsapp' | 'sms' | 'push'
 export interface Campaign {
   id: string
   name: string
-  type: CampaignType
+  type?: CampaignType   // optional — backend returns channel string
+  channel?: string      // backend field
   status: CampaignStatus
   subject?: string
-  content: string
+  content?: string
   audience_id?: string
   scheduled_at?: string
   sent_count?: number
   open_count?: number
   click_count?: number
-  created_at: string
-  updated_at: string
+  created_at?: string
+  updated_at?: string
 }
 
 // ─── Channels ─────────────────────────────────────────────────────────────────
@@ -213,30 +215,14 @@ export interface Channel {
 
 // ─── Inbox / Messages ─────────────────────────────────────────────────────────
 export type MessageDirection = 'inbound' | 'outbound'
-export type MessageStatus = 'sent' | 'delivered' | 'read' | 'failed'
+export type MessageStatus = 'sent' | 'delivered' | 'read' | 'failed' | 'unread'
 
 export interface InboxMessage {
   id: string
-  channel_id: string
-  contact_id?: string
-  contact?: Contact
-  direction: MessageDirection
+  contact_id: string
+  channel: string
   content: string
-  status: MessageStatus
-  created_at: string
-}
-
-export interface Conversation {
-  id: string
-  channel_id: string
-  contact_id?: string
-  contact?: Contact
-  last_message?: InboxMessage
-  unread_count: number
-  status: 'open' | 'closed' | 'pending'
-  assigned_to?: string
-  created_at: string
-  updated_at: string
+  status: string
 }
 
 // ─── Templates ────────────────────────────────────────────────────────────────
@@ -246,28 +232,41 @@ export type TemplateStatus = 'pending' | 'approved' | 'rejected'
 export interface Template {
   id: string
   name: string
-  category: TemplateCategory
-  language: string
+  category?: TemplateCategory  // optional — not always returned by backend
+  language?: string            // optional
   content: string
   status: TemplateStatus
-  channel_type: CampaignType
+  channel_type?: CampaignType  // optional — backend returns 'channel'
+  channel?: string             // backend field
   variables?: string[]
-  created_at: string
-  updated_at: string
+  created_at?: string
+  updated_at?: string
 }
 
 // ─── Agent Config ─────────────────────────────────────────────────────────────
 export interface AgentConfig {
   id: string
-  name: string
-  description?: string
-  model: string
+  // Backend fields
   provider: string
-  system_prompt?: string
+  model_name?: string
+  model?: string              // alias
+  api_key_masked?: string
   temperature?: number
   max_tokens?: number
-  is_active: boolean
-  created_at: string
+  active?: boolean            // backend boolean
+  auto_reply_enabled?: boolean
+  auto_classify_enabled?: boolean
+  approval_required?: boolean
+  autonomous_mode?: boolean
+  system_prompt?: string
+  max_cost_per_run_usd?: number
+  daily_budget_usd?: number
+  // Frontend compat
+  name?: string
+  description?: string
+  is_active?: boolean
+  created_at?: string
+  updated_at?: string
 }
 
 // ─── Agent Runs ───────────────────────────────────────────────────────────────
@@ -275,13 +274,23 @@ export type AgentRunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'ca
 
 export interface AgentRun {
   id: string
-  agent_config_id: string
+  // Backend fields
+  conversation_id?: string
+  run_type?: string
+  model_provider?: string
+  model_name?: string
+  tokens_in?: number
+  tokens_out?: number
+  cost_usd?: number
+  latency_ms?: number
+  // Frontend compat
+  agent_config_id?: string
   agent?: AgentConfig
-  input: string
+  input?: string
   output?: string
-  status: AgentRunStatus
   tokens_used?: number
   duration_ms?: number
+  status: AgentRunStatus
   created_at: string
   finished_at?: string
 }
@@ -347,8 +356,9 @@ export interface CreateCampaignPayload {
 
 export interface CreateTicketPayload {
   customer_id?: string
-  subject: string
-  message: string
+  title?: string
+  subject?: string
+  message?: string
   priority: TicketPriority
 }
 
