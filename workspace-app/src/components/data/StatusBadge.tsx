@@ -22,8 +22,9 @@ const INVOICE_BADGE: Record<InvoiceStatus, { variant: BadgeProps['variant']; lab
   cancelled: { variant: 'default',  label: 'Cancelada' },
 }
 export function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
-  const { variant, label } = INVOICE_BADGE[status]
-  return <Badge variant={variant} dot>{label}</Badge>
+  const cfg = INVOICE_BADGE[status]
+  if (!cfg) return <Badge variant="default" dot>{String(status)}</Badge>
+  return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>
 }
 
 // ─── Subscription Status ──────────────────────────────────────────────────────
@@ -35,8 +36,9 @@ const SUBSCRIPTION_BADGE: Record<SubscriptionStatus, { variant: BadgeProps['vari
   trialing: { variant: 'brand',   label: 'Trial' },
 }
 export function SubscriptionStatusBadge({ status }: { status: SubscriptionStatus }) {
-  const { variant, label } = SUBSCRIPTION_BADGE[status]
-  return <Badge variant={variant} dot>{label}</Badge>
+  const cfg = SUBSCRIPTION_BADGE[status]
+  if (!cfg) return <Badge variant="default" dot>{String(status)}</Badge>
+  return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>
 }
 
 // ─── Payment Status ───────────────────────────────────────────────────────────
@@ -47,8 +49,9 @@ const PAYMENT_BADGE: Record<PaymentStatus, { variant: BadgeProps['variant']; lab
   refunded:  { variant: 'cyan',    label: 'Estornado' },
 }
 export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
-  const { variant, label } = PAYMENT_BADGE[status]
-  return <Badge variant={variant} dot>{label}</Badge>
+  const cfg = PAYMENT_BADGE[status]
+  if (!cfg) return <Badge variant="default" dot>{String(status)}</Badge>
+  return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>
 }
 
 // ─── Ticket Status ────────────────────────────────────────────────────────────
@@ -59,8 +62,9 @@ const TICKET_BADGE: Record<TicketStatus, { variant: BadgeProps['variant']; label
   closed:      { variant: 'default', label: 'Fechado' },
 }
 export function TicketStatusBadge({ status }: { status: TicketStatus }) {
-  const { variant, label } = TICKET_BADGE[status]
-  return <Badge variant={variant} dot>{label}</Badge>
+  const cfg = TICKET_BADGE[status]
+  if (!cfg) return <Badge variant="default" dot>{String(status)}</Badge>
+  return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>
 }
 
 // ─── Ticket Priority ──────────────────────────────────────────────────────────
@@ -71,8 +75,9 @@ const PRIORITY_BADGE: Record<TicketPriority, { variant: BadgeProps['variant']; l
   urgent: { variant: 'danger',  label: 'Urgente' },
 }
 export function TicketPriorityBadge({ priority }: { priority: TicketPriority }) {
-  const { variant, label } = PRIORITY_BADGE[priority]
-  return <Badge variant={variant}>{label}</Badge>
+  const cfg = PRIORITY_BADGE[priority]
+  if (!cfg) return <Badge variant="default">{String(priority)}</Badge>
+  return <Badge variant={cfg.variant}>{cfg.label}</Badge>
 }
 
 // ─── Lead Status ──────────────────────────────────────────────────────────────
@@ -85,8 +90,9 @@ const LEAD_BADGE: Record<LeadStatus, { variant: BadgeProps['variant']; label: st
   lost:      { variant: 'danger',  label: 'Perdido' },
 }
 export function LeadStatusBadge({ status }: { status: LeadStatus }) {
-  const { variant, label } = LEAD_BADGE[status]
-  return <Badge variant={variant} dot>{label}</Badge>
+  const cfg = LEAD_BADGE[status]
+  if (!cfg) return <Badge variant="default" dot>{String(status)}</Badge>
+  return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>
 }
 
 // ─── Campaign Status ──────────────────────────────────────────────────────────
@@ -99,8 +105,9 @@ const CAMPAIGN_BADGE: Record<CampaignStatus, { variant: BadgeProps['variant']; l
   cancelled: { variant: 'danger',  label: 'Cancelada' },
 }
 export function CampaignStatusBadge({ status }: { status: CampaignStatus }) {
-  const { variant, label } = CAMPAIGN_BADGE[status]
-  return <Badge variant={variant} dot>{label}</Badge>
+  const cfg = CAMPAIGN_BADGE[status]
+  if (!cfg) return <Badge variant="default" dot>{String(status)}</Badge>
+  return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>
 }
 
 // ─── Channel Status ───────────────────────────────────────────────────────────
@@ -111,8 +118,9 @@ const CHANNEL_BADGE: Record<ChannelStatus, { variant: BadgeProps['variant']; lab
   error:        { variant: 'danger',  label: 'Erro' },
 }
 export function ChannelStatusBadge({ status }: { status: ChannelStatus }) {
-  const { variant, label } = CHANNEL_BADGE[status]
-  return <Badge variant={variant} dot>{label}</Badge>
+  const cfg = CHANNEL_BADGE[status]
+  if (!cfg) return <Badge variant="default" dot>{String(status)}</Badge>
+  return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>
 }
 
 // ─── Agent Run Status ─────────────────────────────────────────────────────────
@@ -124,8 +132,9 @@ const AGENT_RUN_BADGE: Record<AgentRunStatus, { variant: BadgeProps['variant']; 
   cancelled: { variant: 'default', label: 'Cancelado' },
 }
 export function AgentRunStatusBadge({ status }: { status: AgentRunStatus }) {
-  const { variant, label } = AGENT_RUN_BADGE[status]
-  return <Badge variant={variant} dot>{label}</Badge>
+  const cfg = AGENT_RUN_BADGE[status]
+  if (!cfg) return <Badge variant="default" dot>{String(status)}</Badge>
+  return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>
 }
 
 // ─── Template Status ──────────────────────────────────────────────────────────
@@ -135,6 +144,7 @@ const TEMPLATE_BADGE: Record<TemplateStatus, { variant: BadgeProps['variant']; l
   rejected: { variant: 'danger',  label: 'Rejeitado' },
 }
 export function TemplateStatusBadge({ status }: { status: TemplateStatus }) {
-  const { variant, label } = TEMPLATE_BADGE[status]
-  return <Badge variant={variant} dot>{label}</Badge>
+  const cfg = TEMPLATE_BADGE[status]
+  if (!cfg) return <Badge variant="default" dot>{String(status)}</Badge>
+  return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>
 }

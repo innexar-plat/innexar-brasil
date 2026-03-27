@@ -13,14 +13,20 @@ export function formatCurrency(amount: number, currency = 'BRL'): string {
   }).format(amount)
 }
 
-export function formatDate(date: string): string {
-  return new Intl.DateTimeFormat('pt-BR').format(new Date(date))
+export function formatDate(date: string | null | undefined): string {
+  if (!date) return '—'
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return '—'
+  return new Intl.DateTimeFormat('pt-BR').format(d)
 }
 
-export function formatDateLong(date: string): string {
+export function formatDateLong(date: string | null | undefined): string {
+  if (!date) return '—'
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return '—'
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
-  }).format(new Date(date))
+  }).format(d)
 }
