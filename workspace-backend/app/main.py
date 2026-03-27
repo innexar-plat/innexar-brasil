@@ -28,7 +28,7 @@ app = FastAPI(title=settings.app_name)
 
 @app.get("/health", tags=["health"])
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", "version": "1.0.0"}
 
 
 app.include_router(auth_router, prefix="/api/v1")
