@@ -34,47 +34,78 @@ export default function LoginPage() {
 
   return (
     <div
-      className="relative flex min-h-screen w-full items-center justify-center overflow-hidden"
-      style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, #1e1b4b 0%, #07070e 60%)' }}
+      style={{
+        display: 'grid',
+        placeItems: 'center',
+        minHeight: '100dvh',
+        width: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, #0d0a1e 0%, #07070e 50%, #020f14 100%)',
+      }}
     >
-      {/* Background glow blobs */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div
-          className="absolute -left-48 -top-48 size-[600px] rounded-full opacity-40 blur-3xl"
-          style={{ background: 'radial-gradient(circle, #4f46e5 0%, transparent 70%)' }}
-        />
-        <div
-          className="absolute -bottom-48 -right-48 size-[600px] rounded-full opacity-30 blur-3xl"
-          style={{ background: 'radial-gradient(circle, #06b6d4 0%, transparent 70%)' }}
-        />
-        <div
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[400px] rounded-full opacity-10 blur-3xl"
-          style={{ background: 'radial-gradient(circle, #818cf8 0%, transparent 70%)' }}
-        />
+      {/* Glow blobs — all inline styles, no Tailwind dependency */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+        <div style={{
+          position: 'absolute', top: '-80px', left: '-80px',
+          width: '480px', height: '480px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(79,70,229,0.5) 0%, transparent 65%)',
+          filter: 'blur(60px)',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '-80px', right: '-80px',
+          width: '480px', height: '480px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(6,182,212,0.4) 0%, transparent 65%)',
+          filter: 'blur(60px)',
+        }} />
+        <div style={{
+          position: 'absolute', top: '50%', left: '50%',
+          transform: 'translate(-50%,-50%)',
+          width: '700px', height: '700px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 60%)',
+          filter: 'blur(100px)',
+        }} />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 28, scale: 0.97 }}
+        initial={{ opacity: 0, y: 32, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 w-full max-w-md px-5"
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '420px', padding: '0 20px', boxSizing: 'border-box' }}
       >
-        <div className="glass-strong rounded-3xl p-8">
+        <div style={{
+          background: 'rgba(255,255,255,0.05)',
+          backdropFilter: 'blur(40px)',
+          WebkitBackdropFilter: 'blur(40px)',
+          border: '1px solid rgba(255,255,255,0.10)',
+          borderRadius: '24px',
+          padding: '40px',
+          boxShadow: '0 25px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
+        }}>
           <motion.div
-            initial={{ opacity: 0, y: -12 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.14 }}
-            className="mb-8 text-center"
+            transition={{ delay: 0.12 }}
+            style={{ textAlign: 'center', marginBottom: '32px' }}
           >
-            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-brand-600/20">
-              <div className="size-7 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600" />
+            <div style={{
+              margin: '0 auto 16px',
+              width: '64px', height: '64px',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(99,102,241,0.4)',
+            }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+              </svg>
             </div>
-            <h1 className="text-2xl font-bold text-white">Portal do Cliente</h1>
-            <p className="mt-1 text-sm text-slate-400">Innexar — Acesse sua conta</p>
+            <h1 style={{ color: '#fff', fontSize: '22px', fontWeight: 700, margin: 0 }}>Portal do Cliente</h1>
+            <p style={{ color: 'rgba(148,163,184,1)', fontSize: '14px', marginTop: '6px' }}>Innexar — Acesse sua conta</p>
           </motion.div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <motion.div initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.22 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               <Input
                 label="E-mail"
                 type="email"
@@ -87,7 +118,7 @@ export default function LoginPage() {
               />
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+            <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.28 }}>
               <Input
                 label="Senha"
                 type="password"
@@ -95,7 +126,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                placeholder="••••••••"
                 leftIcon={<Lock className="size-4" />}
               />
             </motion.div>
@@ -111,7 +142,7 @@ export default function LoginPage() {
               </motion.div>
             )}
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.38 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.36 }}>
               <Button fullWidth isLoading={isLoading} size="lg" type="submit" className="mt-2">
                 Entrar
               </Button>
@@ -122,4 +153,3 @@ export default function LoginPage() {
     </div>
   )
 }
-
