@@ -47,7 +47,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=fixelo_fixelo-network"
-      - "traefik.http.routers.br-api.rule=Host(`api.innexar.app`)"
+      - "traefik.http.routers.br-api.rule=Host(`api.innexar.com.br`)"
       - "traefik.http.routers.br-api.entrypoints=websecure"
       - "traefik.http.routers.br-api.tls.certresolver=cloudflare"
       - "traefik.http.routers.br-api.service=br-api-service"
@@ -68,7 +68,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=fixelo_fixelo-network"
-      - "traefik.http.routers.br-portal.rule=Host(`portal.innexar.app`)"
+      - "traefik.http.routers.br-portal.rule=Host(`portal.innexar.com.br`)"
       - "traefik.http.routers.br-portal.entrypoints=websecure"
       - "traefik.http.routers.br-portal.tls.certresolver=cloudflare"
       - "traefik.http.routers.br-portal.service=br-portal-service"
@@ -89,7 +89,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=fixelo_fixelo-network"
-      - "traefik.http.routers.br-workspace.rule=Host(`app.innexar.app`)"
+      - "traefik.http.routers.br-workspace.rule=Host(`app.innexar.com.br`)"
       - "traefik.http.routers.br-workspace.entrypoints=websecure"
       - "traefik.http.routers.br-workspace.tls.certresolver=cloudflare"
       - "traefik.http.routers.br-workspace.service=br-workspace-service"
