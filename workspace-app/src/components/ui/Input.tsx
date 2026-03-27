@@ -13,9 +13,15 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const SIZE_CLASSES = {
-  sm: 'h-8 text-xs px-3',
-  md: 'h-9 text-sm px-3',
-  lg: 'h-11 text-sm px-4',
+  sm: 'h-8 text-xs',
+  md: 'h-9 text-sm',
+  lg: 'h-11 text-sm',
+}
+
+const SIZE_PX = {
+  sm: 12,
+  md: 12,
+  lg: 16,
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -59,14 +65,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
+            style={{
+              paddingLeft: leftIcon ? '2.5rem' : SIZE_PX[inputSize],
+              paddingRight: rightIcon ? '2.5rem' : SIZE_PX[inputSize],
+            }}
             className={cn(
               'w-full rounded-xl border bg-white/5 text-slate-100 placeholder-slate-500 outline-none transition-all duration-150',
               'focus:border-brand-500/60 focus:ring-2 focus:ring-brand-500/15',
               hasError
                 ? 'border-red-500/50 focus:border-red-500/60 focus:ring-red-500/15'
                 : 'border-white/10 hover:border-white/18',
-              leftIcon && 'pl-9',
-              rightIcon && 'pr-9',
               SIZE_CLASSES[inputSize],
               'disabled:cursor-not-allowed disabled:opacity-50',
               className,
