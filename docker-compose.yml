@@ -1,0 +1,108 @@
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: innexar-br-db
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-innexar_workspace}
+      POSTGRES_USER: ${POSTGRES_USER:-innexar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-innexar} -d ${POSTGRES_DB:-innexar_workspace}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── FastAPI Backend ──────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./workspace-backend
+      dockerfile: Dockerfile
+    container_name: innexar-br-backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-innexar}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-innexar_workspace}
+      JWT_SECRET: ${JWT_SECRET}
+      APP_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+      - fixelo_fixelo-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=fixelo_fixelo-network"
+      - "traefik.http.routers.br-api.rule=Host(`api.innexar.app`)"
+      - "traefik.http.routers.br-api.entrypoints=websecure"
+      - "traefik.http.routers.br-api.tls.certresolver=cloudflare"
+      - "traefik.http.routers.br-api.service=br-api-service"
+      - "traefik.http.routers.br-api.middlewares=br-api-compress"
+      - "traefik.http.middlewares.br-api-compress.compress=true"
+      - "traefik.http.services.br-api-service.loadbalancer.server.port=8000"
+      - "traefik.http.services.br-api-service.loadbalancer.passHostHeader=true"
+
+  # ── Portal do Cliente (React SPA) ────────────────────────────────────────────
+  portal-cliente:
+    build:
+      context: ./portal-cliente
+      dockerfile: Dockerfile
+    container_name: innexar-br-portal
+    restart: unless-stopped
+    networks:
+      - fixelo_fixelo-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=fixelo_fixelo-network"
+      - "traefik.http.routers.br-portal.rule=Host(`portal.innexar.app`)"
+      - "traefik.http.routers.br-portal.entrypoints=websecure"
+      - "traefik.http.routers.br-portal.tls.certresolver=cloudflare"
+      - "traefik.http.routers.br-portal.service=br-portal-service"
+      - "traefik.http.routers.br-portal.middlewares=br-portal-compress"
+      - "traefik.http.middlewares.br-portal-compress.compress=true"
+      - "traefik.http.services.br-portal-service.loadbalancer.server.port=80"
+      - "traefik.http.services.br-portal-service.loadbalancer.passHostHeader=true"
+
+  # ── Workspace App (React SPA) ────────────────────────────────────────────────
+  workspace-app:
+    build:
+      context: ./workspace-app
+      dockerfile: Dockerfile
+    container_name: innexar-br-workspace
+    restart: unless-stopped
+    networks:
+      - fixelo_fixelo-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=fixelo_fixelo-network"
+      - "traefik.http.routers.br-workspace.rule=Host(`app.innexar.app`)"
+      - "traefik.http.routers.br-workspace.entrypoints=websecure"
+      - "traefik.http.routers.br-workspace.tls.certresolver=cloudflare"
+      - "traefik.http.routers.br-workspace.service=br-workspace-service"
+      - "traefik.http.routers.br-workspace.middlewares=br-workspace-compress"
+      - "traefik.http.middlewares.br-workspace-compress.compress=true"
+      - "traefik.http.services.br-workspace-service.loadbalancer.server.port=80"
+      - "traefik.http.services.br-workspace-service.loadbalancer.passHostHeader=true"
+
+volumes:
+  db_data:
+
+networks:
+  internal:
+    driver: bridge
+  fixelo_fixelo-network:
+    external: true
