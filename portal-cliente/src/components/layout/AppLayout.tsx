@@ -16,10 +16,12 @@ export function AppLayout() {
       {/* Main content */}
       <div className="flex flex-1 flex-col min-w-0">
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-5 md:p-6 lg:p-8">
-          <AnimatePresence mode="wait" key={location.pathname}>
-            <Outlet />
-          </AnimatePresence>
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-screen-2xl px-5 py-5 md:px-6 md:py-6 lg:px-8 lg:py-7">
+            <AnimatePresence mode="wait" key={location.pathname}>
+              <Outlet />
+            </AnimatePresence>
+          </div>
         </main>
       </div>
     </div>

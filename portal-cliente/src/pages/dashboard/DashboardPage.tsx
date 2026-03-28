@@ -35,28 +35,26 @@ export default function DashboardPage() {
     <PageWrapper>
       <PageHeader title="Dashboard" description="Resumo da sua conta" />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard index={0} icon={<CreditCard className="size-5" />} label="Assinaturas Ativas" value={subs.isLoading ? '—' : String(active)} accent="brand" />
         <StatCard index={1} icon={<FileText className="size-5" />} label="Faturas Pendentes" value={invoices.isLoading ? '—' : String(pending)} accent="warning" />
         <StatCard index={2} icon={<Package className="size-5" />} label="Total a Pagar" value={invoices.isLoading ? '—' : formatCurrency(totalDue)} accent="danger" />
         <StatCard index={3} icon={<Headset className="size-5" />} label="Tickets Abertos" value="—" accent="cyan" />
       </div>
 
-      <div className="mt-8">
-        {invoices.isLoading ? (
-          <div className="flex justify-center py-12"><Spinner size="lg" /></div>
-        ) : (
-          <DataTable<Invoice>
-            title="Faturas Recentes"
-            columns={invoiceCols}
-            data={(invoices.data ?? []).slice(0, 5)}
-            isLoading={invoices.isLoading}
-            page={1}
-            totalPages={1}
-            total={(invoices.data ?? []).length}
-          />
-        )}
-      </div>
+      {invoices.isLoading ? (
+        <div className="flex justify-center py-12"><Spinner size="lg" /></div>
+      ) : (
+        <DataTable<Invoice>
+          title="Faturas Recentes"
+          columns={invoiceCols}
+          data={(invoices.data ?? []).slice(0, 5)}
+          isLoading={invoices.isLoading}
+          page={1}
+          totalPages={1}
+          total={(invoices.data ?? []).length}
+        />
+      )}
     </PageWrapper>
   )
 }

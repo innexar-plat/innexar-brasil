@@ -35,9 +35,11 @@ export default function AppLayout() {
         <Header title={titleFromPath(location.pathname)} onMenuToggle={() => setMobileOpen(true)} />
 
         <main className="flex-1 overflow-y-auto">
-          <AnimatePresence mode="wait">
-            <Outlet key={location.pathname} />
-          </AnimatePresence>
+          <div className="mx-auto w-full max-w-screen-2xl px-4 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-6">
+            <AnimatePresence mode="wait">
+              <Outlet key={location.pathname} />
+            </AnimatePresence>
+          </div>
         </main>
       </div>
     </div>

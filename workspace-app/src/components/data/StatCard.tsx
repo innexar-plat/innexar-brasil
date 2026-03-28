@@ -32,7 +32,7 @@ export function StatCard({ label, value, icon, trend, description, accent = 'bra
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-2xl border border-white/8 bg-surface-2 p-5 flex flex-col gap-4 hover:border-white/13 transition-all duration-200"
+      className="min-h-[120px] rounded-2xl border border-white/8 bg-surface-2 p-5 flex flex-col gap-4 hover:border-white/13 transition-all duration-200"
     >
       {/* Top row */}
       <div className="flex items-start justify-between">
