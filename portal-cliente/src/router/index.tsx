@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { LoadingPage } from '@/components/feedback'
+import { LoadingPage, ChunkErrorBoundary } from '@/components/feedback'
 import LoginPage from '@/pages/LoginPage'
 
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
@@ -13,7 +13,11 @@ const ProdutosPage = lazy(() => import('@/pages/produtos/ProdutosPage'))
 const SuportePage = lazy(() => import('@/pages/suporte/SuportePage'))
 
 function SuspensePage({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<LoadingPage />}>{children}</Suspense>
+  return (
+    <ChunkErrorBoundary>
+      <Suspense fallback={<LoadingPage />}>{children}</Suspense>
+    </ChunkErrorBoundary>
+  )
 }
 
 export const router = createBrowserRouter([
