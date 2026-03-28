@@ -9,7 +9,7 @@ export function AppLayout() {
   const location = useLocation()
 
   return (
-    <div className="flex h-full min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

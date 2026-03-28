@@ -106,7 +106,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
     <>
       {/* Desktop */}
-      <div className="hidden lg:flex h-screen sticky top-0 shrink-0">{content}</div>
+      <div className="hidden lg:flex shrink-0">{content}</div>
 
       {/* Mobile overlay */}
       <AnimatePresence>
