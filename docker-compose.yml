@@ -23,7 +23,7 @@ services:
   # ── FastAPI Backend ──────────────────────────────────────────────────────────
   backend:
     build:
-      context: ./workspace-backend
+      context: ./workspace-backend-innexarbr
       dockerfile: Dockerfile
     container_name: innexar-br-backend
     restart: unless-stopped
@@ -32,6 +32,9 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-innexar}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-innexar_workspace}
       JWT_SECRET: ${JWT_SECRET}
       APP_ENV: production
+      SETTINGS_STATE_FILE: /app/data/settings-state.json
+    volumes:
+      - settings_data:/app/data
     depends_on:
       db:
         condition: service_healthy
@@ -59,7 +62,7 @@ services:
   # ── Portal do Cliente (React SPA) ────────────────────────────────────────────
   portal-cliente:
     build:
-      context: ./portal-cliente
+      context: ./portal-cliente-innexarbr
       dockerfile: Dockerfile
     container_name: innexar-br-portal
     restart: unless-stopped
@@ -80,7 +83,7 @@ services:
   # ── Workspace App (React SPA) ────────────────────────────────────────────────
   workspace-app:
     build:
-      context: ./workspace-app
+      context: ./workspace-app-innexarbr
       dockerfile: Dockerfile
     container_name: innexar-br-workspace
     restart: unless-stopped
@@ -98,8 +101,38 @@ services:
       - "traefik.http.services.br-workspace-service.loadbalancer.server.port=80"
       - "traefik.http.services.br-workspace-service.loadbalancer.passHostHeader=true"
 
+  # ── Website (Next.js) ──────────────────────────────────────────────────────
+  innexar-br-website:
+    build:
+      context: ./innexar-br-website
+      dockerfile: Dockerfile
+    container_name: innexar-br-website
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://innexar.com.br}
+      NEXT_PUBLIC_SITE_NAME: ${NEXT_PUBLIC_SITE_NAME:-Innexar}
+      NEXT_PUBLIC_COLOR_PRIMARY: ${NEXT_PUBLIC_COLOR_PRIMARY:-teal}
+      NEXT_TELEMETRY_DISABLED: 1
+    networks:
+      - fixelo_fixelo-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=fixelo_fixelo-network"
+      - "traefik.http.routers.br-website.rule=Host(`innexar.com.br`) || Host(`www.innexar.com.br`)"
+      - "traefik.http.routers.br-website.entrypoints=websecure"
+      - "traefik.http.routers.br-website.tls.certresolver=cloudflare"
+      - "traefik.http.routers.br-website.service=br-website-service"
+      - "traefik.http.routers.br-website.middlewares=br-website-compress"
+      - "traefik.http.middlewares.br-website-compress.compress=true"
+      - "traefik.http.services.br-website-service.loadbalancer.server.port=3000"
+      - "traefik.http.services.br-website-service.loadbalancer.passHostHeader=true"
+
 volumes:
   db_data:
+  settings_data:
 
 networks:
   internal:
